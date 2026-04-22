@@ -1,0 +1,6 @@
+node_modules/
+data/skills.db
+data/skills.db-wal
+data/skills.db-shm
+.env
+.DS_Store

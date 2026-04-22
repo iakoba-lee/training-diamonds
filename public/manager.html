@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manager View — oversee your team's Diamond 1 and Diamond 2 certification progress.">
+  <title>Skill Portal — Manager View</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="diamond-icon">💎</span>
+        <h1>Skill Portal</h1>
+      </a>
+      <div class="navbar-links">
+        <a href="/" id="nav-dashboard">Dashboard</a>
+        <a href="/manager" class="active" id="nav-manager">Manager View</a>
+      </div>
+    </nav>
+
+    <!-- Header + Add User -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">👥 Team Overview</div>
+          <div class="card-subtitle">Click any row to view detailed charts</div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-add-user">
+          + Add User
+        </button>
+      </div>
+
+      <!-- Team Table -->
+      <table class="team-table" id="team-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Team</th>
+            <th>💎1 Avg</th>
+            <th>💎2 Avg</th>
+            <th>Overall</th>
+            <th>Last Updated</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="team-tbody">
+          <!-- Rows injected by JS -->
+        </tbody>
+      </table>
+
+      <div class="empty-state" id="empty-team" style="display: none;">
+        <div class="empty-icon">👥</div>
+        <p>No team members yet. Add users to get started.</p>
+      </div>
+    </div>
+
+    <!-- Team Average Radar -->
+    <div class="charts-grid" id="team-averages" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📊 Team Average — Diamond 1</div>
+            <div class="card-subtitle">Aggregate current levels across team</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-team-d1"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📊 Team Average — Diamond 2</div>
+            <div class="card-subtitle">Aggregate current levels across team</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-team-d2"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal-overlay" id="add-user-modal">
+    <div class="modal">
+      <h2>Add New User</h2>
+      <div class="form-group">
+        <label for="new-user-name">Display Name</label>
+        <input type="text" id="new-user-name" placeholder="e.g. John Smith" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="new-user-role">Role</label>
+        <select id="new-user-role">
+          <option value="user">User</option>
+          <option value="manager">Manager</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="new-user-team">Team</label>
+        <input type="text" id="new-user-team" placeholder="e.g. Support Team" value="Support Team">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="btn-cancel-add">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-add">Add User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/manager.js"></script>
+</body>
+</html>
