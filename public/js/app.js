@@ -1,6 +1,6 @@
 /* ============================================================
    Skill Portal — Dashboard Logic
-   Handles user picker, radar charts, sliders, and saving
+   Handles auth, user picker, radar charts, sliders, and saving
    ============================================================ */
 
 // --- State ---
@@ -9,6 +9,7 @@ let snapshotType = 'current'; // 'current' or 'aim'
 let chartD1 = null;
 let chartD2 = null;
 let latestData = null;
+let currentRole = null; // 'team' or 'manager'
 
 // --- DOM Refs ---
 const userSelect = document.getElementById('user-select');
@@ -19,6 +20,9 @@ const toggleAim = document.getElementById('toggle-aim');
 const btnSave = document.getElementById('btn-save');
 const saveFeedback = document.getElementById('save-feedback');
 const toastEl = document.getElementById('toast');
+const updatePanel = document.getElementById('update-panel');
+const navbarRole = document.getElementById('navbar-role');
+const btnLogout = document.getElementById('btn-logout');
 
 // --- Chart Configuration ---
 const DIAMOND_LABELS = {
@@ -92,11 +96,51 @@ function makeDatasets(currentData, aimData) {
 
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
-  loadUsers();
-  setupSliders();
-  setupToggle();
-  setupSave();
+  checkAuth();
 });
+
+// --- Auth Check ---
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (!res.ok) {
+      window.location.href = '/login';
+      return;
+    }
+    const data = await res.json();
+    currentRole = data.role;
+    initDashboard();
+  } catch (err) {
+    window.location.href = '/login';
+  }
+}
+
+// --- Initialize Dashboard after auth ---
+function initDashboard() {
+  // Set navbar role badge
+  navbarRole.textContent = currentRole === 'manager' ? '⭐ Manager' : '👥 Team';
+  navbarRole.className = `navbar-role role-${currentRole}`;
+
+  // Hide update panel for team login (read-only)
+  if (currentRole !== 'manager') {
+    updatePanel.classList.add('hidden');
+  }
+
+  // Setup logout
+  btnLogout.addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  });
+
+  loadUsers();
+
+  // Only setup editing controls for manager
+  if (currentRole === 'manager') {
+    setupSliders();
+    setupToggle();
+    setupSave();
+  }
+}
 
 // --- Load Users ---
 async function loadUsers() {
@@ -160,7 +204,10 @@ async function loadSkillData() {
 
     renderChart(1, d1Current, d1Aim);
     renderChart(2, d2Current, d2Aim);
-    populateSliders();
+
+    if (currentRole === 'manager') {
+      populateSliders();
+    }
   } catch (err) {
     showToast('Failed to load skill data', 'error');
   }
@@ -197,7 +244,7 @@ function renderChart(diamond, currentSnap, aimSnap) {
   }
 }
 
-// --- Sliders ---
+// --- Sliders (Manager only) ---
 function setupSliders() {
   document.querySelectorAll('input[type="range"]').forEach(slider => {
     updateSliderFill(slider);
@@ -206,11 +253,8 @@ function setupSliders() {
       const a = slider.dataset.axis;
       const val = slider.value;
 
-      // Update display value
       document.getElementById(`val-d${d}-axis${a}`).textContent = val;
       updateSliderFill(slider);
-
-      // Live preview on chart
       updateChartLive(Number(d));
     });
   });
@@ -229,21 +273,18 @@ function populateSliders() {
 
   const type = snapshotType;
 
-  // Diamond 1
   const d1 = type === 'current' ? latestData.diamond1.current : latestData.diamond1.aim;
   setSlider(1, 1, d1 ? d1.axis_1 : 1);
   setSlider(1, 2, d1 ? d1.axis_2 : 1);
   setSlider(1, 3, d1 ? d1.axis_3 : 1);
   setSlider(1, 4, d1 ? d1.axis_4 : 1);
 
-  // Diamond 2
   const d2 = type === 'current' ? latestData.diamond2.current : latestData.diamond2.aim;
   setSlider(2, 1, d2 ? d2.axis_1 : 1);
   setSlider(2, 2, d2 ? d2.axis_2 : 1);
   setSlider(2, 3, d2 ? d2.axis_3 : 1);
   setSlider(2, 4, d2 ? d2.axis_4 : 1);
 
-  // Update slider styling
   updateSliderClasses();
 }
 
@@ -278,10 +319,9 @@ function updateChartLive(diamond) {
   const chart = diamond === 1 ? chartD1 : chartD2;
   if (!chart) return;
 
-  // Update the correct dataset index (0 = current, 1 = aim)
   const idx = snapshotType === 'current' ? 0 : 1;
   chart.data.datasets[idx].data = data;
-  chart.update('none'); // no animation for live updates
+  chart.update('none');
 }
 
 // --- Toggle Current / Aim ---
@@ -310,7 +350,6 @@ function setupSave() {
     btnSave.textContent = 'Saving...';
 
     try {
-      // Save both diamonds
       const d1Vals = getSliderValues(1);
       const d2Vals = getSliderValues(2);
 
@@ -327,10 +366,8 @@ function setupSave() {
         })
       ]);
 
-      // Refresh data
       await loadSkillData();
 
-      // Show feedback
       saveFeedback.classList.add('visible');
       showToast(`${snapshotType === 'current' ? 'Current' : 'Aim'} snapshot saved!`, 'success');
       setTimeout(() => saveFeedback.classList.remove('visible'), 2000);

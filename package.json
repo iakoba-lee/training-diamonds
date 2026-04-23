@@ -7,10 +7,18 @@
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
-  "keywords": ["skills", "training", "radar-chart", "certification"],
+  "keywords": [
+    "skills",
+    "training",
+    "radar-chart",
+    "certification"
+  ],
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^11.0.0",
-    "express": "^4.21.0"
+    "better-sqlite3-session-store": "^0.1.0",
+    "express": "^4.21.0",
+    "express-session": "^1.19.0"
   }
 }

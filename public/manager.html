@@ -20,6 +20,10 @@
         <a href="/" id="nav-dashboard">Dashboard</a>
         <a href="/manager" class="active" id="nav-manager">Manager View</a>
       </div>
+      <div class="navbar-auth" id="navbar-auth">
+        <span class="navbar-role" id="navbar-role"></span>
+        <button class="btn-logout" id="btn-logout">Logout</button>
+      </div>
     </nav>
 
     <!-- Header + Add User -->
@@ -29,7 +33,7 @@
           <div class="card-title">👥 Team Overview</div>
           <div class="card-subtitle">Click any row to view detailed charts</div>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-add-user">
+        <button class="btn btn-primary btn-sm hidden" id="btn-add-user">
           + Add User
         </button>
       </div>
@@ -45,7 +49,7 @@
             <th>💎2 Avg</th>
             <th>Overall</th>
             <th>Last Updated</th>
-            <th></th>
+            <th id="actions-header" class="hidden"></th>
           </tr>
         </thead>
         <tbody id="team-tbody">
@@ -84,30 +88,58 @@
         </div>
       </div>
     </div>
+
+    <!-- Settings Panel (Manager Only) -->
+    <div class="settings-panel hidden" id="settings-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔒 Access Code Settings</div>
+            <div class="card-subtitle">Change the team and manager passwords</div>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <div class="form-group">
+              <label for="settings-team-pw">Team Access Code</label>
+              <input type="password" id="settings-team-pw" placeholder="New team password">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-save-team-pw">Update Team Code</button>
+          </div>
+          <div class="settings-field">
+            <div class="form-group">
+              <label for="settings-manager-pw">Manager Password</label>
+              <input type="password" id="settings-manager-pw" placeholder="New manager password">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-save-manager-pw">Update Manager Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Add User Modal -->
   <div class="modal-overlay" id="add-user-modal">
     <div class="modal">
-      <h2>Add New User</h2>
+      <h2 id="modal-title">Add New User</h2>
       <div class="form-group">
-        <label for="new-user-name">Display Name</label>
-        <input type="text" id="new-user-name" placeholder="e.g. John Smith" autocomplete="off">
+        <label for="modal-user-name">Display Name</label>
+        <input type="text" id="modal-user-name" placeholder="e.g. John Smith" autocomplete="off">
       </div>
       <div class="form-group">
-        <label for="new-user-role">Role</label>
-        <select id="new-user-role">
+        <label for="modal-user-role">Role</label>
+        <select id="modal-user-role">
           <option value="user">User</option>
           <option value="manager">Manager</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="new-user-team">Team</label>
-        <input type="text" id="new-user-team" placeholder="e.g. Support Team" value="Support Team">
+        <label for="modal-user-team">Team</label>
+        <input type="text" id="modal-user-team" placeholder="e.g. Support Team" value="Support Team">
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" id="btn-cancel-add">Cancel</button>
-        <button class="btn btn-primary" id="btn-confirm-add">Add User</button>
+        <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-modal-confirm">Save</button>
       </div>
     </div>
   </div>

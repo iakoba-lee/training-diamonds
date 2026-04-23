@@ -20,6 +20,10 @@
         <a href="/" class="active" id="nav-dashboard">Dashboard</a>
         <a href="/manager" id="nav-manager">Manager View</a>
       </div>
+      <div class="navbar-auth" id="navbar-auth">
+        <span class="navbar-role" id="navbar-role"></span>
+        <button class="btn-logout" id="btn-logout">Logout</button>
+      </div>
     </nav>
 
     <!-- User Picker -->
@@ -33,7 +37,7 @@
     <!-- Empty state (shown when no user selected) -->
     <div class="empty-state" id="empty-state">
       <div class="empty-icon">💎</div>
-      <p>Select a user above to view and update their Diamond certifications</p>
+      <p>Select a user above to view their Diamond certifications</p>
     </div>
 
     <!-- Dashboard Content (hidden until user selected) -->
@@ -87,8 +91,8 @@
         </div>
       </div>
 
-      <!-- Update Panel -->
-      <div class="update-panel">
+      <!-- Update Panel (Manager Only) -->
+      <div class="update-panel" id="update-panel">
         <div class="card">
           <div class="card-header">
             <div>

@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, 'data');
@@ -39,9 +40,31 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_snapshots_lookup
     ON skill_snapshots(user_id, diamond, snapshot_type, recorded_at DESC);
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
 
-// Seed a default manager if no users exist
+// Seed default access codes if not set
+const SALT_ROUNDS = 10;
+
+const managerPw = db.prepare("SELECT value FROM settings WHERE key = 'manager_password'").get();
+if (!managerPw) {
+  const hash = bcrypt.hashSync('manager', SALT_ROUNDS);
+  db.prepare("INSERT INTO settings (key, value) VALUES ('manager_password', ?)").run(hash);
+  console.log('⚠️  Default manager password set to "manager" — change this in Settings!');
+}
+
+const teamPw = db.prepare("SELECT value FROM settings WHERE key = 'team_password'").get();
+if (!teamPw) {
+  const hash = bcrypt.hashSync('team', SALT_ROUNDS);
+  db.prepare("INSERT INTO settings (key, value) VALUES ('team_password', ?)").run(hash);
+  console.log('⚠️  Default team password set to "team" — change this in Settings!');
+}
+
+// Seed a default manager user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
   const insertUser = db.prepare(

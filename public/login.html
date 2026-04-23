@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to the Diamond Certification Skill Portal.">
+  <title>Skill Portal — Login</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <div class="login-wrapper">
+      <!-- Branding -->
+      <div class="login-brand">
+        <span class="diamond-icon" style="font-size: 48px;">💎</span>
+        <h1>Skill Portal</h1>
+        <p>Diamond Certification Tracker</p>
+      </div>
+
+      <!-- Login Card -->
+      <div class="login-card card">
+        <!-- Role Toggle -->
+        <div class="login-tabs">
+          <button class="login-tab active" data-role="team" id="tab-team">
+            👥 Team Member
+          </button>
+          <button class="login-tab" data-role="manager" id="tab-manager">
+            ⭐ Manager
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" autocomplete="off">
+          <div class="form-group">
+            <label for="login-password" id="password-label">Team Access Code</label>
+            <input type="password" id="login-password" placeholder="Enter access code" autofocus>
+          </div>
+          <div class="login-error" id="login-error"></div>
+          <button type="submit" class="btn btn-primary" id="btn-login" style="width: 100%; margin-top: 8px;">
+            Sign In
+          </button>
+        </form>
+      </div>
+
+      <p class="login-hint">
+        Contact your manager if you don't have the access code
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+</body>
+</html>
