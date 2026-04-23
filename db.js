@@ -45,7 +45,35 @@ db.exec(`
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    diamond INTEGER NOT NULL CHECK(diamond IN (1, 2)),
+    axis INTEGER NOT NULL CHECK(axis BETWEEN 1 AND 4),
+    level INTEGER NOT NULL DEFAULT 1 CHECK(level BETWEEN 1 AND 5),
+    title TEXT NOT NULL,
+    content TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    todo_id INTEGER NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT 0,
+    completed_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE,
+    UNIQUE(user_id, todo_id)
+  );
 `);
+
+// Add 'level' column migration if it doesn't exist
+try {
+  db.exec('ALTER TABLE todos ADD COLUMN level INTEGER NOT NULL DEFAULT 1 CHECK(level BETWEEN 1 AND 5)');
+} catch (e) {
+  // Column already exists
+}
 
 // Seed default access codes if not set
 const SALT_ROUNDS = 10;

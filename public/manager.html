@@ -7,6 +7,7 @@
   <title>Skill Portal — Manager View</title>
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -85,6 +86,63 @@
         </div>
         <div class="chart-container">
           <canvas id="chart-team-d2"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- To-Do Configuration (Manager Only) -->
+    <div class="card hidden" id="todo-config" style="margin-top: 24px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📝 To-Do List Configuration</div>
+          <div class="card-subtitle">Manage learning tasks for each Diamond and Goal</div>
+        </div>
+      </div>
+      <div class="todo-manager-container">
+        <div class="todo-filters">
+          <div class="form-group">
+            <label for="todo-diamond-select">Select Diamond</label>
+            <select id="todo-diamond-select">
+              <option value="1">Diamond 1</option>
+              <option value="2">Diamond 2</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="todo-axis-select" id="todo-axis-label">Select Goal</label>
+            <select id="todo-axis-select">
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="todo-level-select">Select Level</label>
+            <select id="todo-level-select">
+              <option value="1">Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+              <option value="5">Level 5</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="todo-list" id="manager-todo-list">
+          <!-- Populated via JS -->
+        </div>
+
+        <div class="todo-add-form" id="todo-form-container">
+          <h3 id="todo-form-title">Add New Task</h3>
+          <div class="form-group">
+            <label for="todo-new-title">Task Title</label>
+            <input type="text" id="todo-new-title" placeholder="e.g., Read the Security Policy">
+          </div>
+          <div class="form-group">
+            <label for="todo-new-content">Content (Markdown supported)</label>
+            <textarea id="todo-new-content" rows="4" placeholder="Instructions, links, or details..."></textarea>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" id="btn-add-todo">Add Task</button>
+            <button class="btn btn-secondary btn-sm hidden" id="btn-cancel-todo-edit">Cancel</button>
+          </div>
         </div>
       </div>
     </div>

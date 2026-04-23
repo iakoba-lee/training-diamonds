@@ -31,7 +31,12 @@ router.post('/login', (req, res) => {
   }
 
   req.session.role = role;
-  res.json({ role });
+  req.session.save((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Session save failed' });
+    }
+    res.json({ role });
+  });
 });
 
 // POST /api/auth/logout — destroy session

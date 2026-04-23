@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { requireManager } = require('../middleware/auth');
 
 // GET /api/users — list all users
 router.get('/', (req, res) => {
@@ -13,7 +14,7 @@ router.get('/', (req, res) => {
 });
 
 // POST /api/users — create a new user
-router.post('/', (req, res) => {
+router.post('/', requireManager, (req, res) => {
   const { display_name, role = 'user', team = 'Support Team' } = req.body;
 
   if (!display_name || !display_name.trim()) {
@@ -33,7 +34,7 @@ router.post('/', (req, res) => {
 });
 
 // DELETE /api/users/:id — remove a user and their snapshots
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireManager, (req, res) => {
   const { id } = req.params;
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
@@ -46,7 +47,7 @@ router.delete('/:id', (req, res) => {
 });
 
 // PUT /api/users/:id — update user details
-router.put('/:id', (req, res) => {
+router.put('/:id', requireManager, (req, res) => {
   const { id } = req.params;
   const { display_name, role, team } = req.body;
 

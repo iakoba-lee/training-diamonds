@@ -7,6 +7,7 @@
   <title>Skill Portal — Diamond Tracker</title>
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -87,6 +88,41 @@
               <span class="legend-dot aim"></span>
               <span>Aim</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Learning Goals (Compartmentalized) -->
+      <div class="charts-grid fade-in" id="learning-goals-section">
+        <!-- Diamond 1 Goals -->
+        <div class="card" id="d1-goals-card">
+          <div class="card-header" style="margin-bottom: 16px;">
+            <div>
+              <div class="card-title">🎯 Diamond 1 Goals</div>
+              <div class="card-subtitle">Actionable tasks for your learning path</div>
+            </div>
+          </div>
+          <div class="goals-accordion" id="d1-goals" style="display: none;">
+            <div id="d1-goals-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+          <div id="d1-goals-empty" style="padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            No tasks assigned for Diamond 1.
+          </div>
+        </div>
+
+        <!-- Diamond 2 Goals -->
+        <div class="card" id="d2-goals-card">
+          <div class="card-header" style="margin-bottom: 16px;">
+            <div>
+              <div class="card-title">🎯 Diamond 2 Goals</div>
+              <div class="card-subtitle">Actionable tasks for your learning path</div>
+            </div>
+          </div>
+          <div class="goals-accordion" id="d2-goals" style="display: none;">
+            <div id="d2-goals-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+          <div id="d2-goals-empty" style="padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            No tasks assigned for Diamond 2.
           </div>
         </div>
       </div>
@@ -197,6 +233,26 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LMS Modal -->
+  <div class="modal-overlay" id="lms-modal">
+    <div class="modal lms-modal-content" style="max-width: 800px; width: 90%; height: 80vh; display: flex; flex-direction: column; background: var(--surface);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+        <div>
+          <span id="lms-subtitle" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;"></span>
+          <h2 id="lms-title" style="margin: 4px 0 0 0; font-size: 1.5rem; color: var(--text-primary);">Task Title</h2>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-lms-close" style="border-radius: 50%; padding: 8px 12px; flex-shrink: 0;">✕</button>
+      </div>
+      <div id="lms-content" style="flex: 1; overflow-y: auto; padding-right: 8px; line-height: 1.6; color: var(--text-secondary); font-size: 1.05rem;">
+        <!-- Markdown/Text content here -->
+      </div>
+      <div style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
+        <span id="lms-status" style="font-size: 0.95rem; font-weight: 500;"></span>
+        <button class="btn" id="btn-lms-complete" style="transition: all 0.2s;"></button>
       </div>
     </div>
   </div>

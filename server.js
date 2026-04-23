@@ -37,18 +37,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', require('./routes/auth'));
 
 // --- Protected API routes ---
-// Users: GET is readable by anyone logged in, mutations require manager
-const usersRouter = require('./routes/users');
-app.get('/api/users', requireLogin, (req, res, next) => { req.url = '/'; next(); }, usersRouter);
-app.post('/api/users', requireManager, (req, res, next) => { req.url = '/'; next(); }, usersRouter);
-app.put('/api/users/:id', requireManager, (req, res, next) => { req.url = `/${req.params.id}`; next(); }, usersRouter);
-app.delete('/api/users/:id', requireManager, (req, res, next) => { req.url = `/${req.params.id}`; next(); }, usersRouter);
+// Users: GET is readable by anyone logged in, mutations handled inside router (require manager)
+app.use('/api/users', requireLogin, require('./routes/users'));
 
-// Skills: GET readable by anyone logged in, POST (update) requires manager
-const skillsRouter = require('./routes/skills');
-app.get('/api/skills/:userId/latest', requireLogin, (req, res, next) => { req.url = `/${req.params.userId}/latest`; next(); }, skillsRouter);
-app.get('/api/skills/:userId/history', requireLogin, (req, res, next) => { req.url = `/${req.params.userId}/history`; next(); }, skillsRouter);
-app.post('/api/skills/:userId/update', requireManager, (req, res, next) => { req.url = `/${req.params.userId}/update`; next(); }, skillsRouter);
+// Skills: GET readable by anyone logged in, POST (update) handled inside router (require manager)
+app.use('/api/skills', requireLogin, require('./routes/skills'));
+
+// Todos: GET readable by anyone logged in, POST/PUT/DELETE manager only handled inside router
+app.use('/api/todos', requireLogin, require('./routes/todos'));
 
 // Manager: readable by anyone logged in
 app.use('/api/manager', requireLogin, require('./routes/manager'));

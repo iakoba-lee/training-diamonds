@@ -31,6 +31,7 @@ const DIAMOND_LABELS = {
 const BASE_CHART_OPTIONS = {
   responsive: true,
   maintainAspectRatio: true,
+  layout: { padding: 25 },
   plugins: { legend: { display: false } },
   scales: {
     r: {
@@ -85,7 +86,9 @@ function initManagerView() {
     document.getElementById('btn-add-user').classList.remove('hidden');
     document.getElementById('actions-header').classList.remove('hidden');
     document.getElementById('settings-panel').classList.remove('hidden');
+    document.getElementById('todo-config').classList.remove('hidden');
     setupSettings();
+    setupTodoManager();
   }
 
   loadTeam();
@@ -470,6 +473,181 @@ async function changePassword(target, newPassword) {
     showToast(`${target === 'manager' ? 'Manager' : 'Team'} password updated!`, 'success');
   } catch (err) {
     showToast('Failed: ' + err.message, 'error');
+  }
+}
+
+// --- To-Do Manager ---
+const diamondSelect = document.getElementById('todo-diamond-select');
+const axisSelect = document.getElementById('todo-axis-select');
+const levelSelect = document.getElementById('todo-level-select');
+const todoListEl = document.getElementById('manager-todo-list');
+const newTitleInput = document.getElementById('todo-new-title');
+const newContentInput = document.getElementById('todo-new-content');
+const btnAddTodo = document.getElementById('btn-add-todo');
+const btnCancelTodoEdit = document.getElementById('btn-cancel-todo-edit');
+const todoFormTitle = document.getElementById('todo-form-title');
+let managerTodos = [];
+let editingTodoId = null; // null = adding, number = editing
+let previewingTodoId = null; // Track which todo is currently previewing content
+
+async function loadManagerTodos() {
+  try {
+    const res = await fetch('/api/todos');
+    if (!res.ok) throw new Error('Failed to fetch to-dos');
+    managerTodos = await res.json();
+    renderManagerTodos();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function updateAxisLabels() {
+  if (!axisSelect) return;
+  const diamond = Number(diamondSelect.value);
+  const labels = DIAMOND_LABELS[diamond];
+  
+  axisSelect.innerHTML = labels.map((label, i) => {
+    const displayLabel = label.replace('\n', ' ');
+    return `<option value="${i + 1}">${displayLabel}</option>`;
+  }).join('').trim();
+  
+  renderManagerTodos();
+}
+
+function renderManagerTodos() {
+  if (!todoListEl) return;
+  const diamond = Number(diamondSelect.value);
+  const axis = Number(axisSelect.value);
+  const level = Number(levelSelect.value);
+
+  const filtered = managerTodos.filter(t => t.diamond === diamond && t.axis === axis && t.level === level);
+
+  if (filtered.length === 0) {
+    todoListEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No tasks configured for this goal yet.</p>';
+    return;
+  }
+
+  todoListEl.innerHTML = filtered.map(t => {
+    const isPreviewing = previewingTodoId === t.id;
+    return `
+      <div class="todo-item card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); cursor: pointer;" onclick="toggleTodoPreview(${t.id})">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+          <div style="flex: 1;">
+            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(t.title)}</h4>
+          </div>
+          <div style="display: flex; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
+            <button class="btn btn-secondary btn-sm" onclick="editTodo(${t.id})" title="Edit Task">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTodo(${t.id})" title="Delete Task">✕</button>
+          </div>
+        </div>
+        ${isPreviewing ? `
+          <div class="todo-preview" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+            <div class="markdown-preview" id="lms-content" style="font-size: 0.9rem; color: var(--text-secondary);">
+              ${marked.parse(t.content || '')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+window.toggleTodoPreview = function(id) {
+  if (previewingTodoId === id) {
+    previewingTodoId = null;
+  } else {
+    previewingTodoId = id;
+  }
+  renderManagerTodos();
+};
+
+window.editTodo = function(id) {
+  const t = managerTodos.find(x => x.id === id);
+  if (!t) return;
+  
+  editingTodoId = id;
+  newTitleInput.value = t.title;
+  newContentInput.value = t.content || '';
+  
+  todoFormTitle.textContent = 'Edit Task';
+  btnAddTodo.textContent = 'Save Changes';
+  btnCancelTodoEdit.classList.remove('hidden');
+  
+  // Scroll to form
+  document.getElementById('todo-form-container').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.cancelTodoEdit = function() {
+  editingTodoId = null;
+  newTitleInput.value = '';
+  newContentInput.value = '';
+  
+  todoFormTitle.textContent = 'Add New Task';
+  btnAddTodo.textContent = 'Add Task';
+  btnCancelTodoEdit.classList.add('hidden');
+};
+
+async function addTodo() {
+  const diamond = Number(diamondSelect.value);
+  const axis = Number(axisSelect.value);
+  const level = Number(levelSelect.value);
+  const title = newTitleInput.value.trim();
+  const content = newContentInput.value.trim();
+
+  if (!title) {
+    showToast('Task Title is required', 'error');
+    return;
+  }
+
+  try {
+    let res;
+    if (editingTodoId) {
+      res = await fetch(`/api/todos/${editingTodoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, level })
+      });
+    } else {
+      res = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ diamond, axis, level, title, content })
+      });
+    }
+    
+    if (!res.ok) throw new Error('Failed to save task');
+    
+    const msg = editingTodoId ? 'Task updated!' : 'Task added!';
+    cancelTodoEdit();
+    showToast(msg, 'success');
+    await loadManagerTodos();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+window.deleteTodo = async function(id) {
+  if (!confirm('Are you sure you want to delete this task?')) return;
+  try {
+    const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete task');
+    showToast('Task deleted', 'success');
+    await loadManagerTodos();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+function setupTodoManager() {
+  if (diamondSelect && axisSelect && levelSelect && btnAddTodo) {
+    diamondSelect.addEventListener('change', updateAxisLabels);
+    axisSelect.addEventListener('change', renderManagerTodos);
+    levelSelect.addEventListener('change', renderManagerTodos);
+    btnAddTodo.addEventListener('click', addTodo);
+    btnCancelTodoEdit.addEventListener('click', cancelTodoEdit);
+    
+    updateAxisLabels();
+    loadManagerTodos();
   }
 }
 

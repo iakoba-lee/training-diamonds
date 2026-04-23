@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { requireManager } = require('../middleware/auth');
 
 // Axis labels for reference
 const DIAMOND_AXES = {
@@ -36,7 +37,7 @@ router.get('/:userId/latest', (req, res) => {
 });
 
 // POST /api/skills/:userId/update — save a new skill snapshot
-router.post('/:userId/update', (req, res) => {
+router.post('/:userId/update', requireManager, (req, res) => {
   const { userId } = req.params;
   const { diamond, axis_1, axis_2, axis_3, axis_4, snapshot_type } = req.body;
 

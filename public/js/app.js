@@ -10,6 +10,9 @@ let chartD1 = null;
 let chartD2 = null;
 let latestData = null;
 let currentRole = null; // 'team' or 'manager'
+let userTodos = [];
+let activeTodo = null;
+let openAxes = {}; // Track which diamond-axis dropdowns are open
 
 // --- DOM Refs ---
 const userSelect = document.getElementById('user-select');
@@ -26,13 +29,16 @@ const btnLogout = document.getElementById('btn-logout');
 
 // --- Chart Configuration ---
 const DIAMOND_LABELS = {
-  1: ['Applications', 'OSs', 'Customer Service', 'Operations'],
-  2: ['Security', 'AV', 'Network', 'Proj Mgmt /\nLeadership']
+  1: ['Applications', 'OSs', ['Customer', 'Service'], 'Operations'],
+  2: ['Security', 'AV', 'Network', ['Proj Mgmt /', 'Leadership']]
 };
 
 const CHART_OPTIONS = {
   responsive: true,
   maintainAspectRatio: true,
+  layout: {
+    padding: 0
+  },
   plugins: {
     legend: { display: false }
   },
@@ -45,11 +51,12 @@ const CHART_OPTIONS = {
         stepSize: 1,
         backdropColor: 'transparent',
         color: '#64748b',
-        font: { size: 11 }
+        font: { size: 10 }
       },
       pointLabels: {
         color: '#94a3b8',
-        font: { size: 12, weight: '500', family: 'Inter' }
+        padding: 5,
+        font: { size: 11, weight: '500', family: 'Inter' }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.06)',
@@ -194,8 +201,12 @@ async function loadSkillData() {
   if (!currentUserId) return;
 
   try {
-    const res = await fetch(`/api/skills/${currentUserId}/latest`);
-    latestData = await res.json();
+    const [resSkills, resTodos] = await Promise.all([
+      fetch(`/api/skills/${currentUserId}/latest`),
+      fetch(`/api/todos?userId=${currentUserId}`)
+    ]);
+    latestData = await resSkills.json();
+    userTodos = await resTodos.json();
 
     const d1Current = latestData.diamond1.current;
     const d1Aim = latestData.diamond1.aim;
@@ -204,6 +215,7 @@ async function loadSkillData() {
 
     renderChart(1, d1Current, d1Aim);
     renderChart(2, d2Current, d2Aim);
+    renderTodos();
 
     if (currentRole === 'manager') {
       populateSliders();
@@ -384,6 +396,210 @@ function setupSave() {
       btnSave.textContent = '💾 Save Snapshot';
     }
   });
+}
+
+// --- LMS and To-Dos ---
+function renderTodos() {
+  renderDiamondTodos(1, document.getElementById('d1-goals'), document.getElementById('d1-goals-list'));
+  renderDiamondTodos(2, document.getElementById('d2-goals'), document.getElementById('d2-goals-list'));
+}
+
+function renderDiamondTodos(diamond, containerEl, listEl) {
+  const dTodos = userTodos.filter(t => t.diamond === diamond);
+  const emptyEl = document.getElementById(`d${diamond}-goals-empty`);
+  
+  if (dTodos.length === 0) {
+    containerEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  
+  containerEl.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+  
+  const byAxis = { 1: [], 2: [], 3: [], 4: [] };
+  dTodos.forEach(t => byAxis[t.axis].push(t));
+
+  let html = '';
+  for (let axis = 1; axis <= 4; axis++) {
+    if (byAxis[axis].length === 0) continue;
+    
+    // Flatten array labels
+    let label = DIAMOND_LABELS[diamond][axis - 1];
+    if (Array.isArray(label)) label = label.join(' ');
+    const axisName = label;
+    
+    const axisTodos = byAxis[axis];
+    const completedCount = axisTodos.filter(t => t.completion.completed).length;
+    const totalCount = axisTodos.length;
+    
+    const isOpen = openAxes[`${diamond}-${axis}`];
+    
+    html += `
+      <div class="axis-group" style="margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.2);">
+        <div class="axis-header" onclick="toggleAxis(${diamond}, ${axis})" style="cursor: pointer; padding: 14px 16px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="dropdown-caret" id="caret-${diamond}-${axis}" style="display: inline-block; transition: transform 0.3s ease; color: var(--text-muted); font-size: 0.8rem; ${isOpen ? 'transform: rotate(90deg);' : ''}">▶</span>
+            <strong style="color: var(--text-primary); font-size: 0.95rem;">${axisName}</strong>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 4px 10px; border-radius: 12px; font-weight: 600;">${completedCount} / ${totalCount} Done</span>
+        </div>
+        <div class="axis-content" id="axis-content-${diamond}-${axis}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
+    `;
+    
+    // Group by level
+    const levels = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    axisTodos.forEach(t => {
+      const lvl = t.level || 1;
+      if (levels[lvl]) levels[lvl].push(t);
+    });
+    
+    // Check locked state for each level
+    let previousLevelIncomplete = false;
+    for (let l = 1; l <= 5; l++) {
+      if (levels[l].length === 0) continue;
+      
+      const levelTodos = levels[l];
+      const isLevelComplete = levelTodos.every(t => t.completion.completed);
+      const isLocked = previousLevelIncomplete;
+      
+      html += `
+          <div class="level-group" style="margin: 8px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 12px;">
+            <h5 style="font-size: 0.85rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+              Level ${l} ${isLocked ? '<span style="font-size: 0.75rem;">(Locked)</span>' : ''}
+            </h5>
+      `;
+      
+      html += levelTodos.map(t => {
+        const isDone = t.completion.completed;
+        const icon = isDone ? '<span style="color: var(--accent-green); font-weight: bold;">✓</span>' : '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
+        
+        if (isLocked) {
+          return `
+            <div class="todo-item-row locked" style="padding: 8px 12px; display: flex; align-items: center; gap: 12px; opacity: 0.5; cursor: not-allowed; border-bottom: 1px solid rgba(255,255,255,0.02);">
+              ${icon}
+              <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">${escapeHtml(t.title)}</span>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="todo-item-row" onclick="openLmsModal(${t.id})" style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+              ${icon}
+              <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${isDone ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
+            </div>
+          `;
+        }
+      }).join('');
+      
+      html += `</div>`; // Close level-group
+      
+      if (!isLevelComplete) {
+        previousLevelIncomplete = true;
+      }
+    }
+    
+    html += `
+        </div>
+      </div>
+    `;
+  }
+  listEl.innerHTML = html;
+}
+
+window.toggleAxis = function(diamond, axis) {
+  const el = document.getElementById(`axis-content-${diamond}-${axis}`);
+  const caret = document.getElementById(`caret-${diamond}-${axis}`);
+  
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    if (caret) caret.style.transform = 'rotate(90deg)';
+    openAxes[`${diamond}-${axis}`] = true;
+  } else {
+    el.style.display = 'none';
+    if (caret) caret.style.transform = 'rotate(0deg)';
+    openAxes[`${diamond}-${axis}`] = false;
+  }
+};
+
+const lmsModal = document.getElementById('lms-modal');
+const lmsTitle = document.getElementById('lms-title');
+const lmsSubtitle = document.getElementById('lms-subtitle');
+const lmsContent = document.getElementById('lms-content');
+const lmsStatus = document.getElementById('lms-status');
+const btnLmsComplete = document.getElementById('btn-lms-complete');
+const btnLmsClose = document.getElementById('btn-lms-close');
+
+if (btnLmsClose) {
+  btnLmsClose.addEventListener('click', () => lmsModal.classList.remove('visible'));
+  lmsModal.addEventListener('click', (e) => {
+    if (e.target === lmsModal) lmsModal.classList.remove('visible');
+  });
+
+  btnLmsComplete.addEventListener('click', async () => {
+    if (!activeTodo || !currentUserId) return;
+    
+    // Managers should probably not check off tasks for the team from this interface, 
+    // but the backend allows it. However, if they want to modify, they can.
+    
+    const newState = !activeTodo.completion.completed;
+    
+    try {
+      btnLmsComplete.disabled = true;
+      const res = await fetch(`/api/todos/${activeTodo.id}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, completed: newState })
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      
+      activeTodo.completion.completed = newState ? 1 : 0;
+      updateLmsButtonState();
+      renderTodos(); 
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btnLmsComplete.disabled = false;
+    }
+  });
+}
+
+window.openLmsModal = function(todoId) {
+  const t = userTodos.find(x => x.id === todoId);
+  if (!t) return;
+  activeTodo = t;
+  
+  const axisName = DIAMOND_LABELS[t.diamond][t.axis - 1].replace('\n', ' ');
+  lmsSubtitle.textContent = `Diamond ${t.diamond} · ${axisName}`;
+  lmsTitle.textContent = t.title;
+  
+  // Parse Markdown to HTML
+  lmsContent.innerHTML = marked.parse(t.content || '');
+  
+  updateLmsButtonState();
+  lmsModal.classList.add('visible');
+};
+
+function updateLmsButtonState() {
+  if (!activeTodo) return;
+  const isDone = activeTodo.completion.completed;
+  if (isDone) {
+    lmsStatus.textContent = 'Status: Completed ✓';
+    lmsStatus.style.color = '#10b981';
+    btnLmsComplete.textContent = 'Mark Incomplete';
+    btnLmsComplete.className = 'btn btn-secondary';
+  } else {
+    lmsStatus.textContent = 'Status: Incomplete';
+    lmsStatus.style.color = 'var(--text-muted)';
+    btnLmsComplete.textContent = 'Mark as Complete ✓';
+    btnLmsComplete.className = 'btn btn-primary';
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 // --- Toast ---
