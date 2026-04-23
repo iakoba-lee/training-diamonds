@@ -356,7 +356,6 @@ textarea {
 }
 
 .card:hover {
-  border-color: var(--byu-royal);
   box-shadow: var(--shadow-md);
 }
 
@@ -687,10 +686,6 @@ input[type="range"].slider-current {
 
 .team-table tr td:first-child {
   border-left: 3px solid transparent;
-}
-
-.team-table tr:hover td:first-child {
-  border-left-color: var(--byu-royal);
 }
 
 .team-table .user-name {
