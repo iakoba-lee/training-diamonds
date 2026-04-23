@@ -8,7 +8,7 @@ function requireLogin(req, res, next) {
   res.status(401).json({ error: 'Authentication required' });
 }
 
-// Require manager login
+// Require manager login for API routes (returns JSON)
 function requireManager(req, res, next) {
   if (req.session && req.session.role === 'manager') {
     return next();
@@ -19,4 +19,12 @@ function requireManager(req, res, next) {
   res.status(403).json({ error: 'Manager access required' });
 }
 
-module.exports = { requireLogin, requireManager };
+// Require manager login for Page routes (redirects)
+function requireManagerPage(req, res, next) {
+  if (req.session && req.session.role === 'manager') {
+    return next();
+  }
+  res.redirect('/');
+}
+
+module.exports = { requireLogin, requireManager, requireManagerPage };

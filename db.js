@@ -61,6 +61,7 @@ db.exec(`
     user_id INTEGER NOT NULL,
     todo_id INTEGER NOT NULL,
     completed BOOLEAN NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'incomplete' CHECK(status IN ('incomplete', 'awaiting_approval', 'completed')),
     completed_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE,
@@ -71,6 +72,13 @@ db.exec(`
 // Add 'level' column migration if it doesn't exist
 try {
   db.exec('ALTER TABLE todos ADD COLUMN level INTEGER NOT NULL DEFAULT 1 CHECK(level BETWEEN 1 AND 5)');
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'status' column migration to user_todos
+try {
+  db.exec("ALTER TABLE user_todos ADD COLUMN status TEXT NOT NULL DEFAULT 'incomplete' CHECK(status IN ('incomplete', 'awaiting_approval', 'completed'))");
 } catch (e) {
   // Column already exists
 }

@@ -13,17 +13,14 @@ let currentRole = null; // 'team' or 'manager'
 let userTodos = [];
 let activeTodo = null;
 let openAxes = {}; // Track which diamond-axis dropdowns are open
+let teamChartD1 = null;
+let teamChartD2 = null;
 
 // --- DOM Refs ---
 const userSelect = document.getElementById('user-select');
 const emptyState = document.getElementById('empty-state');
 const dashboardContent = document.getElementById('dashboard-content');
-const toggleCurrent = document.getElementById('toggle-current');
-const toggleAim = document.getElementById('toggle-aim');
-const btnSave = document.getElementById('btn-save');
-const saveFeedback = document.getElementById('save-feedback');
 const toastEl = document.getElementById('toast');
-const updatePanel = document.getElementById('update-panel');
 const navbarRole = document.getElementById('navbar-role');
 const btnLogout = document.getElementById('btn-logout');
 
@@ -103,6 +100,11 @@ function makeDatasets(currentData, aimData) {
 
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
+  // Configure marked for GFM and line breaks
+  marked.setOptions({
+    gfm: true,
+    breaks: true
+  });
   checkAuth();
 });
 
@@ -116,9 +118,15 @@ async function checkAuth() {
     }
     const data = await res.json();
     currentRole = data.role;
-    initDashboard();
   } catch (err) {
     window.location.href = '/login';
+    return;
+  }
+
+  try {
+    initDashboard();
+  } catch (err) {
+    console.error('Error initializing dashboard:', err);
   }
 }
 
@@ -128,9 +136,12 @@ function initDashboard() {
   navbarRole.textContent = currentRole === 'manager' ? '⭐ Manager' : '👥 Team';
   navbarRole.className = `navbar-role role-${currentRole}`;
 
-  // Hide update panel for team login (read-only)
+  // Hide manager-only UI elements for team login
   if (currentRole !== 'manager') {
-    updatePanel.classList.add('hidden');
+    const updatePanel = document.getElementById('update-panel');
+    if (updatePanel) updatePanel.classList.add('hidden');
+    const navManager = document.getElementById('nav-manager');
+    if (navManager) navManager.style.display = 'none';
   }
 
   // Setup logout
@@ -140,13 +151,10 @@ function initDashboard() {
   });
 
   loadUsers();
+  loadTeamAverages();
 
   // Only setup editing controls for manager
-  if (currentRole === 'manager') {
-    setupSliders();
-    setupToggle();
-    setupSave();
-  }
+  // (Slider setup removed - moved to Manager View)
 }
 
 // --- Load Users ---
@@ -216,10 +224,6 @@ async function loadSkillData() {
     renderChart(1, d1Current, d1Aim);
     renderChart(2, d2Current, d2Aim);
     renderTodos();
-
-    if (currentRole === 'manager') {
-      populateSliders();
-    }
   } catch (err) {
     showToast('Failed to load skill data', 'error');
   }
@@ -256,6 +260,57 @@ function renderChart(diamond, currentSnap, aimSnap) {
   }
 }
 
+// --- Team Averages ---
+async function loadTeamAverages() {
+  try {
+    const res = await fetch('/api/skills/averages');
+    const data = await res.json();
+
+    if (data.diamond1) {
+      const d1Vals = [data.diamond1.axis_1, data.diamond1.axis_2, data.diamond1.axis_3, data.diamond1.axis_4];
+      renderTeamChart(1, d1Vals);
+    }
+    if (data.diamond2) {
+      const d2Vals = [data.diamond2.axis_1, data.diamond2.axis_2, data.diamond2.axis_3, data.diamond2.axis_4];
+      renderTeamChart(2, d2Vals);
+    }
+  } catch (err) {
+    console.error('Failed to load team averages:', err);
+  }
+}
+
+function renderTeamChart(diamond, data) {
+  const canvasId = diamond === 1 ? 'chart-team-d1' : 'chart-team-d2';
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const config = {
+    type: 'radar',
+    data: {
+      labels: DIAMOND_LABELS[diamond],
+      datasets: [{
+        label: 'Team Average',
+        data: data,
+        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+        borderColor: 'rgba(139, 92, 246, 0.9)',
+        pointBackgroundColor: '#111827',
+        pointBorderColor: '#8b5cf6',
+        borderWidth: 2.5
+      }]
+    },
+    options: { ...CHART_OPTIONS }
+  };
+
+  if (diamond === 1) {
+    if (teamChartD1) teamChartD1.destroy();
+    teamChartD1 = new Chart(ctx, config);
+  } else {
+    if (teamChartD2) teamChartD2.destroy();
+    teamChartD2 = new Chart(ctx, config);
+  }
+}
+
 // --- Sliders (Manager only) ---
 function setupSliders() {
   document.querySelectorAll('input[type="range"]').forEach(slider => {
@@ -272,131 +327,7 @@ function setupSliders() {
   });
 }
 
-function updateSliderFill(slider) {
-  const min = Number(slider.min);
-  const max = Number(slider.max);
-  const val = Number(slider.value);
-  const pct = ((val - min) / (max - min)) * 100;
-  slider.style.setProperty('--fill-percent', pct + '%');
-}
-
-function populateSliders() {
-  if (!latestData) return;
-
-  const type = snapshotType;
-
-  const d1 = type === 'current' ? latestData.diamond1.current : latestData.diamond1.aim;
-  setSlider(1, 1, d1 ? d1.axis_1 : 0);
-  setSlider(1, 2, d1 ? d1.axis_2 : 0);
-  setSlider(1, 3, d1 ? d1.axis_3 : 0);
-  setSlider(1, 4, d1 ? d1.axis_4 : 0);
-
-  const d2 = type === 'current' ? latestData.diamond2.current : latestData.diamond2.aim;
-  setSlider(2, 1, d2 ? d2.axis_1 : 0);
-  setSlider(2, 2, d2 ? d2.axis_2 : 0);
-  setSlider(2, 3, d2 ? d2.axis_3 : 0);
-  setSlider(2, 4, d2 ? d2.axis_4 : 0);
-
-  updateSliderClasses();
-}
-
-function setSlider(diamond, axis, value) {
-  const slider = document.getElementById(`slider-d${diamond}-axis${axis}`);
-  const valEl = document.getElementById(`val-d${diamond}-axis${axis}`);
-  slider.value = value;
-  valEl.textContent = value;
-  updateSliderFill(slider);
-}
-
-function getSliderValues(diamond) {
-  return {
-    axis_1: Number(document.getElementById(`slider-d${diamond}-axis1`).value),
-    axis_2: Number(document.getElementById(`slider-d${diamond}-axis2`).value),
-    axis_3: Number(document.getElementById(`slider-d${diamond}-axis3`).value),
-    axis_4: Number(document.getElementById(`slider-d${diamond}-axis4`).value)
-  };
-}
-
-function updateSliderClasses() {
-  document.querySelectorAll('input[type="range"]').forEach(slider => {
-    slider.classList.toggle('slider-current', snapshotType === 'current');
-  });
-}
-
-// --- Live Chart Preview ---
-function updateChartLive(diamond) {
-  const vals = getSliderValues(diamond);
-  const data = [vals.axis_1, vals.axis_2, vals.axis_3, vals.axis_4];
-
-  const chart = diamond === 1 ? chartD1 : chartD2;
-  if (!chart) return;
-
-  const idx = snapshotType === 'current' ? 0 : 1;
-  chart.data.datasets[idx].data = data;
-  chart.update('none');
-}
-
-// --- Toggle Current / Aim ---
-function setupToggle() {
-  toggleCurrent.addEventListener('click', () => {
-    snapshotType = 'current';
-    toggleCurrent.className = 'active-current';
-    toggleAim.className = '';
-    populateSliders();
-  });
-
-  toggleAim.addEventListener('click', () => {
-    snapshotType = 'aim';
-    toggleAim.className = 'active-aim';
-    toggleCurrent.className = '';
-    populateSliders();
-  });
-}
-
-// --- Save ---
-function setupSave() {
-  btnSave.addEventListener('click', async () => {
-    if (!currentUserId) return;
-
-    btnSave.disabled = true;
-    btnSave.textContent = 'Saving...';
-
-    try {
-      const d1Vals = getSliderValues(1);
-      const d2Vals = getSliderValues(2);
-
-      const [res1, res2] = await Promise.all([
-        fetch(`/api/skills/${currentUserId}/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ diamond: 1, ...d1Vals, snapshot_type: snapshotType })
-        }),
-        fetch(`/api/skills/${currentUserId}/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ diamond: 2, ...d2Vals, snapshot_type: snapshotType })
-        })
-      ]);
-
-      if (!res1.ok || !res2.ok) {
-        const err1 = !res1.ok ? await res1.json() : null;
-        const err2 = !res2.ok ? await res2.json() : null;
-        throw new Error((err1?.error || '') + ' ' + (err2?.error || ''));
-      }
-
-      await loadSkillData();
-
-      saveFeedback.classList.add('visible');
-      showToast(`${snapshotType === 'current' ? 'Current' : 'Aim'} snapshot saved!`, 'success');
-      setTimeout(() => saveFeedback.classList.remove('visible'), 2000);
-    } catch (err) {
-      showToast('Failed to save: ' + err.message, 'error');
-    } finally {
-      btnSave.disabled = false;
-      btnSave.textContent = '💾 Save Snapshot';
-    }
-  });
-}
+// (Slider logic removed - moved to Manager View)
 
 // --- LMS and To-Dos ---
 function renderTodos() {
@@ -471,21 +402,36 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
       `;
       
       html += levelTodos.map(t => {
-        const isDone = t.completion.completed;
-        const icon = isDone ? '<span style="color: var(--accent-green); font-weight: bold;">✓</span>' : '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
+        const status = t.completion.status || (t.completion.completed ? 'completed' : 'incomplete');
+        const isDone = status === 'completed';
+        const isAwaiting = status === 'awaiting_approval';
         
+        let icon = '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
+        let textStyle = '';
+        let extraText = '';
+        
+        if (isAwaiting) {
+          icon = '<span style="color: var(--accent-blue); font-weight: bold;">⏳</span>';
+          extraText = '<span style="font-size: 0.75rem; color: var(--accent-blue); padding-left: 8px;">(Awaiting Approval)</span>';
+        } else if (isDone) {
+          icon = '<span style="color: var(--accent-green); font-weight: bold;">✓</span>';
+          textStyle = 'text-decoration: line-through; color: var(--text-muted);';
+        }
+
         if (isLocked) {
           return `
             <div class="todo-item-row locked" style="padding: 8px 12px; display: flex; align-items: center; gap: 12px; opacity: 0.5; cursor: not-allowed; border-bottom: 1px solid rgba(255,255,255,0.02);">
               ${icon}
               <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">${escapeHtml(t.title)}</span>
+              ${extraText}
             </div>
           `;
         } else {
           return `
             <div class="todo-item-row" onclick="openLmsModal(${t.id})" style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
               ${icon}
-              <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${isDone ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
+              <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
+              ${extraText}
             </div>
           `;
         }
@@ -541,7 +487,10 @@ if (btnLmsClose) {
     // Managers should probably not check off tasks for the team from this interface, 
     // but the backend allows it. However, if they want to modify, they can.
     
-    const newState = !activeTodo.completion.completed;
+    const status = activeTodo.completion.status || 'incomplete';
+    // If it's awaiting approval or completed, the next click sets it to incomplete
+    const isCurrentlyDoneOrAwaiting = status === 'completed' || status === 'awaiting_approval';
+    const newState = !isCurrentlyDoneOrAwaiting;
     
     try {
       btnLmsComplete.disabled = true;
@@ -552,7 +501,10 @@ if (btnLmsClose) {
       });
       if (!res.ok) throw new Error('Failed to update status');
       
-      activeTodo.completion.completed = newState ? 1 : 0;
+      const updatedStatus = await res.json();
+      activeTodo.completion.completed = updatedStatus.completed;
+      activeTodo.completion.status = updatedStatus.status;
+      
       updateLmsButtonState();
       renderTodos(); 
     } catch (err) {
@@ -581,11 +533,17 @@ window.openLmsModal = function(todoId) {
 
 function updateLmsButtonState() {
   if (!activeTodo) return;
-  const isDone = activeTodo.completion.completed;
-  if (isDone) {
+  const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
+  
+  if (status === 'completed') {
     lmsStatus.textContent = 'Status: Completed ✓';
     lmsStatus.style.color = '#10b981';
     btnLmsComplete.textContent = 'Mark Incomplete';
+    btnLmsComplete.className = 'btn btn-secondary';
+  } else if (status === 'awaiting_approval') {
+    lmsStatus.textContent = 'Status: Awaiting Approval ⏳';
+    lmsStatus.style.color = '#3b82f6';
+    btnLmsComplete.textContent = 'Cancel Completion Request';
     btnLmsComplete.className = 'btn btn-secondary';
   } else {
     lmsStatus.textContent = 'Status: Incomplete';

@@ -9,6 +9,54 @@ const DIAMOND_AXES = {
   2: ['Security', 'AV', 'Network', 'Project Management/Leadership']
 };
 
+// GET /api/skills/averages — get team-wide averages
+router.get('/averages', (req, res) => {
+  const getLatestForEachUser = db.prepare(`
+    SELECT user_id, diamond, axis_1, axis_2, axis_3, axis_4
+    FROM skill_snapshots s1
+    WHERE snapshot_type = 'current'
+    AND recorded_at = (
+      SELECT MAX(recorded_at)
+      FROM skill_snapshots s2
+      WHERE s2.user_id = s1.user_id
+      AND s2.diamond = s1.diamond
+      AND s2.snapshot_type = 'current'
+    )
+  `).all();
+
+  const totals = {
+    1: { axis_1: 0, axis_2: 0, axis_3: 0, axis_4: 0, count: 0 },
+    2: { axis_1: 0, axis_2: 0, axis_3: 0, axis_4: 0, count: 0 }
+  };
+
+  getLatestForEachUser.forEach(s => {
+    totals[s.diamond].axis_1 += s.axis_1;
+    totals[s.diamond].axis_2 += s.axis_2;
+    totals[s.diamond].axis_3 += s.axis_3;
+    totals[s.diamond].axis_4 += s.axis_4;
+    totals[s.diamond].count++;
+  });
+
+  const averages = {
+    diamond1: totals[1].count > 0 ? {
+      axis_1: +(totals[1].axis_1 / totals[1].count).toFixed(1),
+      axis_2: +(totals[1].axis_2 / totals[1].count).toFixed(1),
+      axis_3: +(totals[1].axis_3 / totals[1].count).toFixed(1),
+      axis_4: +(totals[1].axis_4 / totals[1].count).toFixed(1),
+      count: totals[1].count
+    } : null,
+    diamond2: totals[2].count > 0 ? {
+      axis_1: +(totals[2].axis_1 / totals[2].count).toFixed(1),
+      axis_2: +(totals[2].axis_2 / totals[2].count).toFixed(1),
+      axis_3: +(totals[2].axis_3 / totals[2].count).toFixed(1),
+      axis_4: +(totals[2].axis_4 / totals[2].count).toFixed(1),
+      count: totals[2].count
+    } : null
+  };
+
+  res.json(averages);
+});
+
 // GET /api/skills/:userId/latest — get latest current + aim for both diamonds
 router.get('/:userId/latest', (req, res) => {
   const { userId } = req.params;

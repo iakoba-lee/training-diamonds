@@ -6,7 +6,7 @@ const SqliteStore = require('better-sqlite3-session-store')(session);
 // Initialize database (runs schema creation + seeding)
 const db = require('./db');
 
-const { requireLogin, requireManager } = require('./middleware/auth');
+const { requireLogin, requireManager, requireManagerPage } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,8 +46,8 @@ app.use('/api/skills', requireLogin, require('./routes/skills'));
 // Todos: GET readable by anyone logged in, POST/PUT/DELETE manager only handled inside router
 app.use('/api/todos', requireLogin, require('./routes/todos'));
 
-// Manager: readable by anyone logged in
-app.use('/api/manager', requireLogin, require('./routes/manager'));
+// Manager: readable by manager only
+app.use('/api/manager', requireManager, require('./routes/manager'));
 
 // --- Page routes ---
 app.get('/login', (req, res) => {
@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/manager', (req, res) => {
+app.get('/manager', requireManagerPage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'manager.html'));
 });
 
