@@ -75,21 +75,21 @@ function makeDatasets(currentData, aimData) {
   return [
     {
       label: 'Current',
-      data: currentData || [1, 1, 1, 1],
+      data: currentData || [0, 0, 0, 0],
       backgroundColor: 'rgba(239, 68, 68, 0.15)',
       borderColor: 'rgba(239, 68, 68, 0.9)',
       pointBackgroundColor: '#111827',
       pointBorderColor: '#ef4444',
-      order: 2
+      order: 1
     },
     {
       label: 'Aim',
-      data: aimData || [1, 1, 1, 1],
+      data: aimData || [0, 0, 0, 0],
       backgroundColor: 'rgba(59, 130, 246, 0.12)',
       borderColor: 'rgba(59, 130, 246, 0.9)',
       pointBackgroundColor: '#111827',
       pointBorderColor: '#3b82f6',
-      order: 1
+      order: 2
     }
   ];
 }
@@ -220,11 +220,11 @@ function renderChart(diamond, currentSnap, aimSnap) {
 
   const currentData = currentSnap
     ? [currentSnap.axis_1, currentSnap.axis_2, currentSnap.axis_3, currentSnap.axis_4]
-    : [1, 1, 1, 1];
+    : [0, 0, 0, 0];
 
   const aimData = aimSnap
     ? [aimSnap.axis_1, aimSnap.axis_2, aimSnap.axis_3, aimSnap.axis_4]
-    : [1, 1, 1, 1];
+    : [0, 0, 0, 0];
 
   const config = {
     type: 'radar',
@@ -274,16 +274,16 @@ function populateSliders() {
   const type = snapshotType;
 
   const d1 = type === 'current' ? latestData.diamond1.current : latestData.diamond1.aim;
-  setSlider(1, 1, d1 ? d1.axis_1 : 1);
-  setSlider(1, 2, d1 ? d1.axis_2 : 1);
-  setSlider(1, 3, d1 ? d1.axis_3 : 1);
-  setSlider(1, 4, d1 ? d1.axis_4 : 1);
+  setSlider(1, 1, d1 ? d1.axis_1 : 0);
+  setSlider(1, 2, d1 ? d1.axis_2 : 0);
+  setSlider(1, 3, d1 ? d1.axis_3 : 0);
+  setSlider(1, 4, d1 ? d1.axis_4 : 0);
 
   const d2 = type === 'current' ? latestData.diamond2.current : latestData.diamond2.aim;
-  setSlider(2, 1, d2 ? d2.axis_1 : 1);
-  setSlider(2, 2, d2 ? d2.axis_2 : 1);
-  setSlider(2, 3, d2 ? d2.axis_3 : 1);
-  setSlider(2, 4, d2 ? d2.axis_4 : 1);
+  setSlider(2, 1, d2 ? d2.axis_1 : 0);
+  setSlider(2, 2, d2 ? d2.axis_2 : 0);
+  setSlider(2, 3, d2 ? d2.axis_3 : 0);
+  setSlider(2, 4, d2 ? d2.axis_4 : 0);
 
   updateSliderClasses();
 }
@@ -353,7 +353,7 @@ function setupSave() {
       const d1Vals = getSliderValues(1);
       const d2Vals = getSliderValues(2);
 
-      await Promise.all([
+      const [res1, res2] = await Promise.all([
         fetch(`/api/skills/${currentUserId}/update`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -365,6 +365,12 @@ function setupSave() {
           body: JSON.stringify({ diamond: 2, ...d2Vals, snapshot_type: snapshotType })
         })
       ]);
+
+      if (!res1.ok || !res2.ok) {
+        const err1 = !res1.ok ? await res1.json() : null;
+        const err2 = !res2.ok ? await res2.json() : null;
+        throw new Error((err1?.error || '') + ' ' + (err2?.error || ''));
+      }
 
       await loadSkillData();
 

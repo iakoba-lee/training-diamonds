@@ -50,8 +50,8 @@ router.post('/:userId/update', (req, res) => {
 
   const values = [axis_1, axis_2, axis_3, axis_4];
   for (const v of values) {
-    if (typeof v !== 'number' || v < 1 || v > 5) {
-      return res.status(400).json({ error: 'All axis values must be integers 1-5' });
+    if (typeof v !== 'number' || v < 0 || v > 5) {
+      return res.status(400).json({ error: 'All axis values must be integers 0-5' });
     }
   }
 

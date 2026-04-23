@@ -250,10 +250,10 @@ function renderExpandCharts(user) {
 
     const currentVals = currentSnap
       ? [currentSnap.axis_1, currentSnap.axis_2, currentSnap.axis_3, currentSnap.axis_4]
-      : [1, 1, 1, 1];
+      : [0, 0, 0, 0];
     const aimVals = aimSnap
       ? [aimSnap.axis_1, aimSnap.axis_2, aimSnap.axis_3, aimSnap.axis_4]
-      : [1, 1, 1, 1];
+      : [0, 0, 0, 0];
 
     expandCharts[key] = new Chart(canvas.getContext('2d'), {
       type: 'radar',
