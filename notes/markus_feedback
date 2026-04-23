@@ -1,0 +1,11 @@
+The app does a good job of showing where everyone is at but it doesn't have any to-do actions. 
+
+There are 8 skill categories to track. 4 for tier 1 and 4 for tier 2. Each skill can be rated on a scale from 0 to 5. 
+
+The skills are level 1 : Applications, Operating Systems, Customer Service, and Operations
+
+The skills are level 2: Security, Audio-Visual, Networks, and Project Management
+
+It would be cool to for the manager to see progress over time on the manager dashboard. We want to do performance reviews using this data and be able to log that in the system. 
+
+It would also be cool if under each user's chart (diamond 1 and 2) there was a list of the four skill categories and when clicked on, it expanded to show the skill levels (1-5) and the to-do items to level up in that skill. 

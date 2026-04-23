@@ -1,0 +1,176 @@
+# 🖥️ Deploying Skill Portal on Your Mac Mini
+
+## Prerequisites
+- Mac Mini connected to your network (Wi-Fi or Ethernet)
+- Admin account on the Mac Mini
+
+---
+
+## Step 1 — Install Node.js
+
+Open **Terminal** on the Mac Mini and run:
+
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node.js
+brew install node
+
+# Verify installation
+node -v
+npm -v
+```
+
+---
+
+## Step 2 — Clone the Repo from GitHub
+
+```bash
+# Navigate to where you want the project
+cd ~/Documents
+
+# Clone your repo
+git clone https://github.com/iakoba-lee/training-diamonds.git
+
+cd training-diamonds
+```
+
+> [!NOTE]
+> If the repo is private, you'll need to authenticate. Run `brew install gh` then `gh auth login` and follow the prompts.
+
+---
+
+## Step 3 — Install Dependencies & Test
+
+```bash
+npm install
+npm start
+```
+
+Open a browser on the Mac Mini and go to **http://localhost:3000** to verify it works. Press `Ctrl+C` to stop.
+
+---
+
+## Step 4 — Transfer Your Existing Database (Optional)
+
+If you want to keep your current users and skill data, copy the database from your current machine:
+
+**On your current Mac**, run:
+```bash
+scp ~/Training\ Diamonds/data/skills.db USERNAME@MAC_MINI_IP:~/Documents/training-diamonds/data/
+```
+
+Replace `USERNAME` with the Mac Mini's username and `MAC_MINI_IP` with its IP address (see Step 6 to find it).
+
+---
+
+## Step 5 — Keep the App Running with PM2
+
+Without PM2, the app stops when you close Terminal. PM2 keeps it running in the background and auto-restarts on crashes.
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start the app with PM2
+pm2 start server.js --name skill-portal
+
+# Save the PM2 process list
+pm2 save
+
+# Set PM2 to start on boot
+pm2 startup
+```
+
+> [!IMPORTANT]
+> After running `pm2 startup`, it will print a command you need to copy and run. Make sure to do that — it's what enables auto-start on reboot.
+
+**Useful PM2 commands:**
+| Command | What it does |
+|---|---|
+| `pm2 status` | Check if the app is running |
+| `pm2 logs skill-portal` | View live logs |
+| `pm2 restart skill-portal` | Restart the app |
+| `pm2 stop skill-portal` | Stop the app |
+
+---
+
+## Step 6 — Find the Mac Mini's IP Address
+
+```bash
+ipconfig getifaddr en0    # Wi-Fi
+# or
+ipconfig getifaddr en1    # Ethernet
+```
+
+Write this down — other devices on your network will use this to access the app.
+
+> **Example:** If the IP is `192.168.1.50`, the app is at **http://192.168.1.50:3000**
+
+---
+
+## Step 7 — Allow Network Access (Firewall)
+
+If the Mac Mini's firewall is on, you need to allow incoming connections:
+
+1. Go to **System Settings → Network → Firewall**
+2. Click **Options**
+3. Add **Node.js** to the allowed apps list
+4. Or simply turn off the firewall if it's an internal/trusted network
+
+---
+
+## Step 8 — Access from Other Devices
+
+On any device connected to the **same network**, open a browser and go to:
+
+```
+http://MAC_MINI_IP:3000
+```
+
+For example: `http://192.168.1.50:3000`
+
+---
+
+## Optional Extras
+
+### Set a Static IP (Recommended)
+
+So the address doesn't change when the Mac Mini restarts:
+
+1. **System Settings → Wi-Fi** (or Ethernet) → **Details → TCP/IP**
+2. Change **Configure IPv4** to **Manually**
+3. Set your desired IP (e.g., `192.168.1.50`)
+4. Set **Subnet Mask** to `255.255.255.0`
+5. Set **Router** to your router's IP (usually `192.168.1.1`)
+
+### Prevent Mac Mini from Sleeping
+
+So the server stays available 24/7:
+
+1. **System Settings → Energy Saver** (or Battery → Power Adapter)
+2. Check **Prevent automatic sleeping when the display is off**
+3. Check **Start up automatically after a power failure**
+
+### Bookmark It for the Team
+
+Share this link with your team:
+```
+http://192.168.1.50:3000/login
+```
+
+---
+
+## Quick Reference Checklist
+
+- [ ] Install Node.js via Homebrew
+- [ ] Clone repo from GitHub
+- [ ] Run `npm install`
+- [ ] Transfer `data/skills.db` from current machine (if keeping data)
+- [ ] Install PM2 and start the app
+- [ ] Run `pm2 startup` and the generated command
+- [ ] Find/set the Mac Mini's IP address
+- [ ] Configure firewall to allow connections
+- [ ] Disable sleep mode
+- [ ] Test from another device on the network
