@@ -763,10 +763,6 @@ input[type="range"].slider-current {
   gap: 20px;
 }
 
-.expand-chart {
-  max-width: 300px;
-  margin: 0 auto;
-}
 
 /* --- Login Branding --- */
 .login-brand {

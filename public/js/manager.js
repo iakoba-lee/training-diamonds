@@ -187,13 +187,13 @@ function renderTable() {
           <div class="expand-inner">
             <div>
               <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">💎 Diamond 1</h4>
-              <div class="expand-chart">
+              <div class="chart-container">
                 <canvas id="expand-chart-d1-${user.id}"></canvas>
               </div>
             </div>
             <div>
               <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">💎 Diamond 2</h4>
-              <div class="expand-chart">
+              <div class="chart-container">
                 <canvas id="expand-chart-d2-${user.id}"></canvas>
               </div>
             </div>
@@ -314,7 +314,7 @@ function renderAimSliders(user) {
 
     const diamondData = diamond === 1 ? user.diamond1 : user.diamond2;
     const aimSnap = diamondData.aim || { axis_1: 0, axis_2: 0, axis_3: 0, axis_4: 0 };
-    
+
     let html = '';
     for (let axis = 1; axis <= 4; axis++) {
       let label = DIAMOND_LABELS[diamond][axis - 1];
@@ -334,16 +334,16 @@ function renderAimSliders(user) {
       `;
     }
     container.innerHTML = html;
-    
+
     // Initial fill for sliders
     container.querySelectorAll('input[type="range"]').forEach(s => updateSliderFill(s));
   });
 }
 
-window.updateAimLive = function(userId, diamond, axis, value) {
+window.updateAimLive = function (userId, diamond, axis, value) {
   const valEl = document.getElementById(`val-aim-d${diamond}-a${axis}-${userId}`);
   if (valEl) valEl.textContent = value;
-  
+
   const slider = document.getElementById(`slider-aim-d${diamond}-a${axis}-${userId}`);
   if (slider) updateSliderFill(slider);
 
@@ -364,10 +364,10 @@ window.updateAimLive = function(userId, diamond, axis, value) {
   chart.update('none');
 };
 
-window.saveAimSnapshot = async function(userId) {
+window.saveAimSnapshot = async function (userId) {
   const btn = document.getElementById(`btn-save-aim-${userId}`);
   const feedback = document.getElementById(`aim-save-feedback-${userId}`);
-  
+
   btn.disabled = true;
   btn.textContent = 'Saving...';
 
@@ -403,7 +403,7 @@ window.saveAimSnapshot = async function(userId) {
     showToast('Growth aims updated!', 'success');
     feedback.classList.add('visible');
     setTimeout(() => feedback.classList.remove('visible'), 2000);
-    
+
     // Refresh data to ensure state is consistent
     await loadTeam();
   } catch (err) {
@@ -478,30 +478,30 @@ function renderUserTodosForExpand(userId) {
 function renderDiamondTodosExpand(diamond, userId) {
   const listEl = document.getElementById(`expand-todos-d${diamond}-${userId}`);
   if (!listEl) return;
-  
+
   const dTodos = activeUserTodos.filter(t => t.diamond === diamond);
   if (dTodos.length === 0) {
     listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No tasks assigned.</p>';
     return;
   }
-  
+
   const byAxis = { 1: [], 2: [], 3: [], 4: [] };
   dTodos.forEach(t => byAxis[t.axis].push(t));
 
   let html = '';
   for (let axis = 1; axis <= 4; axis++) {
     if (byAxis[axis].length === 0) continue;
-    
+
     let label = DIAMOND_LABELS[diamond][axis - 1];
     if (Array.isArray(label)) label = label.join(' ');
     const axisName = label.replace('\n', ' ');
-    
+
     const axisTodos = byAxis[axis];
     const completedCount = axisTodos.filter(t => t.completion.completed).length;
     const totalCount = axisTodos.length;
-    
+
     const isOpen = openAxes[`${userId}-${diamond}-${axis}`];
-    
+
     html += `
       <div class="axis-group" style="margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.2);">
         <div class="axis-header" onclick="toggleExpandAxis(${userId}, ${diamond}, ${axis})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
@@ -513,37 +513,37 @@ function renderDiamondTodosExpand(diamond, userId) {
         </div>
         <div class="axis-content" id="expand-axis-content-${userId}-${diamond}-${axis}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
     `;
-    
+
     const levels = { 1: [], 2: [], 3: [], 4: [], 5: [] };
     axisTodos.forEach(t => {
       const lvl = t.level || 1;
       if (levels[lvl]) levels[lvl].push(t);
     });
-    
+
     let previousLevelIncomplete = false;
     for (let l = 1; l <= 5; l++) {
       if (levels[l].length === 0) continue;
-      
+
       const levelTodos = levels[l];
       const isLevelComplete = levelTodos.every(t => t.completion.completed);
       const isLocked = previousLevelIncomplete;
-      
+
       html += `
           <div class="level-group" style="margin: 6px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 10px;">
             <h5 style="font-size: 0.8rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
               Level ${l} ${isLocked ? '<span style="font-size: 0.7rem;">(Locked)</span>' : ''}
             </h5>
       `;
-      
+
       html += levelTodos.map(t => {
         const status = t.completion.status || (t.completion.completed ? 'completed' : 'incomplete');
         const isDone = status === 'completed';
         const isAwaiting = status === 'awaiting_approval';
-        
+
         let icon = '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
         let textStyle = '';
         let extraText = '';
-        
+
         if (isAwaiting) {
           icon = '<span style="color: var(--accent-blue); font-weight: bold;">⏳</span>';
           extraText = '<span style="font-size: 0.7rem; color: var(--accent-blue); padding-left: 6px;">(Awaiting Approval)</span>';
@@ -553,7 +553,7 @@ function renderDiamondTodosExpand(diamond, userId) {
         }
 
         const action = status === 'completed' ? 'deny' : 'approve';
-        
+
         return `
           <div class="todo-item-row ${isLocked ? 'locked' : ''}" onclick="openManagerLmsModal(${t.id})" style="cursor: pointer; padding: 6px 10px; display: flex; align-items: center; gap: 10px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02); ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : ''}" ${!isLocked ? 'onmouseover="this.style.background=\'var(--bg-card-hover)\'" onmouseout="this.style.background=\'transparent\'"' : ''}>
             <span class="status-icon-tap" onclick="event.stopPropagation(); if(!${isLocked}) handleQuickApproval(${userId}, ${t.id}, '${action}')" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; transition: background 0.2s;" onmouseover="if(!${isLocked}) this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
@@ -564,11 +564,11 @@ function renderDiamondTodosExpand(diamond, userId) {
           </div>
         `;
       }).join('');
-      
+
       html += `</div>`;
       if (!isLevelComplete) previousLevelIncomplete = true;
     }
-    
+
     html += `
         </div>
       </div>
@@ -577,11 +577,11 @@ function renderDiamondTodosExpand(diamond, userId) {
   listEl.innerHTML = html;
 }
 
-window.toggleExpandAxis = function(userId, diamond, axis) {
+window.toggleExpandAxis = function (userId, diamond, axis) {
   const el = document.getElementById(`expand-axis-content-${userId}-${diamond}-${axis}`);
   const caret = document.getElementById(`expand-caret-${userId}-${diamond}-${axis}`);
   const key = `${userId}-${diamond}-${axis}`;
-  
+
   if (el.style.display === 'none') {
     el.style.display = 'block';
     if (caret) caret.style.transform = 'rotate(90deg)';
@@ -593,7 +593,7 @@ window.toggleExpandAxis = function(userId, diamond, axis) {
   }
 };
 
-window.handleQuickApproval = async function(userId, todoId, action) {
+window.handleQuickApproval = async function (userId, todoId, action) {
   try {
     const res = await fetch('/api/todos/approvals', {
       method: 'POST',
@@ -604,15 +604,15 @@ window.handleQuickApproval = async function(userId, todoId, action) {
       const err = await res.json();
       throw new Error(err.error || 'Failed to update approval');
     }
-    
+
     showToast(action === 'approve' ? 'Status updated: Completed' : 'Status updated: Revoked', 'success');
-    
+
     // Update local state for todos to avoid full reload delay
     await loadUserTodosForExpand(userId);
-    
+
     // Refresh main team table to update averages/badges (this will now preserve expanded state)
     await loadTeam();
-    
+
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -634,40 +634,40 @@ function ensureManagerLmsModal() {
 
     btnLmsComplete.addEventListener('click', async () => {
       if (!activeTodo || !expandedUserId) return;
-      
+
       const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
       let action = 'approve'; // default to grant
       if (status === 'completed' || status === 'awaiting_approval') {
         action = status === 'completed' ? 'deny' : 'approve';
       }
-      
+
       try {
         btnLmsComplete.disabled = true;
         btnLmsComplete.textContent = 'Processing...';
-        
+
         const res = await fetch('/api/todos/approvals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: expandedUserId, todoId: activeTodo.id, action })
         });
-        
+
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.error || 'Failed to update approval');
         }
-        
+
         showToast(action === 'approve' ? 'Status updated: Completed' : 'Status updated: Revoked', 'success');
-        
+
         await loadUserTodosForExpand(expandedUserId);
-        
+
         const updatedTodo = activeUserTodos.find(x => x.id === activeTodo.id);
         if (updatedTodo) {
           activeTodo = updatedTodo;
           updateManagerLmsButtonState();
         }
-        
+
         await loadTeam();
-        
+
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
@@ -678,25 +678,25 @@ function ensureManagerLmsModal() {
   }
 }
 
-window.openManagerLmsModal = function(todoId) {
+window.openManagerLmsModal = function (todoId) {
   ensureManagerLmsModal();
   const t = activeUserTodos.find(x => x.id === todoId);
   if (!t) return;
   activeTodo = t;
-  
+
   const lmsModal = document.getElementById('lms-modal');
   const lmsTitle = document.getElementById('lms-title');
   const lmsSubtitle = document.getElementById('lms-subtitle');
   const lmsContent = document.getElementById('lms-content');
-  
+
   let label = DIAMOND_LABELS[t.diamond][t.axis - 1];
   if (Array.isArray(label)) label = label.join(' ');
   const axisName = label.replace('\n', ' ');
-  
+
   lmsSubtitle.textContent = `Diamond ${t.diamond} · ${axisName} · Level ${t.level || 1}`;
   lmsTitle.textContent = t.title;
   lmsContent.innerHTML = marked.parse(t.content || '');
-  
+
   updateManagerLmsButtonState();
   lmsModal.classList.add('visible');
 };
@@ -705,27 +705,27 @@ function updateManagerLmsButtonState() {
   if (!activeTodo) return;
   const lmsStatus = document.getElementById('lms-status');
   const btnLmsComplete = document.getElementById('btn-lms-complete');
-  
+
   const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
-  
+
   if (status === 'completed') {
     lmsStatus.textContent = 'Status: Completed ✓';
-    lmsStatus.style.color = '#10b981'; 
+    lmsStatus.style.color = '#10b981';
     btnLmsComplete.textContent = 'Revoke Completion ✕';
     btnLmsComplete.className = 'btn btn-secondary';
-    btnLmsComplete.style.color = '#ef4444'; 
+    btnLmsComplete.style.color = '#ef4444';
   } else if (status === 'awaiting_approval') {
     lmsStatus.textContent = 'Status: Awaiting Approval ⏳';
-    lmsStatus.style.color = '#3b82f6'; 
+    lmsStatus.style.color = '#3b82f6';
     btnLmsComplete.textContent = 'Grant Completion ✓';
     btnLmsComplete.className = 'btn btn-primary';
-    btnLmsComplete.style.color = ''; 
+    btnLmsComplete.style.color = '';
   } else {
     lmsStatus.textContent = 'Status: Incomplete';
     lmsStatus.style.color = 'var(--text-muted)';
     btnLmsComplete.textContent = 'Grant Completion ✓';
     btnLmsComplete.className = 'btn btn-primary';
-    btnLmsComplete.style.color = ''; 
+    btnLmsComplete.style.color = '';
   }
 }
 
@@ -952,12 +952,12 @@ function updateAxisLabels() {
   if (!axisSelect) return;
   const diamond = Number(diamondSelect.value);
   const labels = DIAMOND_LABELS[diamond];
-  
+
   axisSelect.innerHTML = labels.map((label, i) => {
     const displayLabel = label.replace('\n', ' ');
     return `<option value="${i + 1}">${displayLabel}</option>`;
   }).join('').trim();
-  
+
   renderManagerTodos();
 }
 
@@ -999,7 +999,7 @@ function renderManagerTodos() {
   }).join('');
 }
 
-window.toggleTodoPreview = function(id) {
+window.toggleTodoPreview = function (id) {
   if (previewingTodoId === id) {
     previewingTodoId = null;
   } else {
@@ -1008,27 +1008,27 @@ window.toggleTodoPreview = function(id) {
   renderManagerTodos();
 };
 
-window.editTodo = function(id) {
+window.editTodo = function (id) {
   const t = managerTodos.find(x => x.id === id);
   if (!t) return;
-  
+
   editingTodoId = id;
   newTitleInput.value = t.title;
   newContentInput.value = t.content || '';
-  
+
   todoFormTitle.textContent = 'Edit Task';
   btnAddTodo.textContent = 'Save Changes';
   btnCancelTodoEdit.classList.remove('hidden');
-  
+
   // Scroll to form
   document.getElementById('todo-form-container').scrollIntoView({ behavior: 'smooth' });
 };
 
-window.cancelTodoEdit = function() {
+window.cancelTodoEdit = function () {
   editingTodoId = null;
   newTitleInput.value = '';
   newContentInput.value = '';
-  
+
   todoFormTitle.textContent = 'Add New Task';
   btnAddTodo.textContent = 'Add Task';
   btnCancelTodoEdit.classList.add('hidden');
@@ -1061,9 +1061,9 @@ async function addTodo() {
         body: JSON.stringify({ diamond, axis, level, title, content })
       });
     }
-    
+
     if (!res.ok) throw new Error('Failed to save task');
-    
+
     const msg = editingTodoId ? 'Task updated!' : 'Task added!';
     cancelTodoEdit();
     showToast(msg, 'success');
@@ -1073,7 +1073,7 @@ async function addTodo() {
   }
 }
 
-window.deleteTodo = async function(id) {
+window.deleteTodo = async function (id) {
   if (!confirm('Are you sure you want to delete this task?')) return;
   try {
     const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
@@ -1092,7 +1092,7 @@ function setupTodoManager() {
     levelSelect.addEventListener('change', renderManagerTodos);
     btnAddTodo.addEventListener('click', addTodo);
     btnCancelTodoEdit.addEventListener('click', cancelTodoEdit);
-    
+
     updateAxisLabels();
     loadManagerTodos();
   }
@@ -1112,17 +1112,17 @@ async function loadPendingApprovals() {
 function renderPendingApprovals(pending) {
   const listEl = document.getElementById('pending-approvals-list');
   if (!listEl) return;
-  
+
   if (!pending || pending.length === 0) {
     listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No pending approvals.</p>';
     return;
   }
-  
+
   listEl.innerHTML = pending.map(p => {
     // Determine Axis name
     const diamondAxes = DIAMOND_LABELS[p.diamond];
     const axisName = diamondAxes ? String(diamondAxes[p.axis - 1]).replace('\n', ' ') : `Axis ${p.axis}`;
-    
+
     return `
       <div class="card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 16px;">
         <div style="flex: 1;">
@@ -1144,7 +1144,7 @@ function renderPendingApprovals(pending) {
   }).join('');
 }
 
-window.handleApproval = async function(userId, todoId, action) {
+window.handleApproval = async function (userId, todoId, action) {
   try {
     const res = await fetch('/api/todos/approvals', {
       method: 'POST',
@@ -1155,10 +1155,10 @@ window.handleApproval = async function(userId, todoId, action) {
       const err = await res.json();
       throw new Error(err.error || 'Failed to update approval');
     }
-    
+
     showToast(action === 'approve' ? 'Approved!' : 'Denied', 'success');
     loadPendingApprovals();
-    
+
     if (action === 'approve') {
       loadTeam(); // Reload team data since their diamond might have updated
     }
