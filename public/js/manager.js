@@ -28,7 +28,7 @@ const btnLogout = document.getElementById('btn-logout');
 // --- Chart config ---
 const DIAMOND_LABELS = {
   1: ['Applications', 'OSs', 'Customer Service', 'Operations'],
-  2: ['Security', 'AV', 'Network', 'Proj Mgmt /\nLeadership']
+  2: ['Security', 'AV', 'Network', 'Project Management']
 };
 
 const BASE_CHART_OPTIONS = {
