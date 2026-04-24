@@ -52,4 +52,62 @@ router.get('/team-overview', (req, res) => {
   res.json(overview);
 });
 
+// POST /api/manager/progress-reviews/:userId
+router.post('/progress-reviews/:userId', (req, res) => {
+  const { userId } = req.params;
+  const { notes } = req.body;
+
+  if (!notes) return res.status(400).json({ error: 'Notes are required' });
+
+  try {
+    db.prepare('INSERT INTO progress_reviews (user_id, notes) VALUES (?, ?)').run(userId, notes);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/manager/progress-reviews/:reviewId
+router.put('/progress-reviews/:reviewId', (req, res) => {
+  const { reviewId } = req.params;
+  const { notes } = req.body;
+
+  if (!notes) return res.status(400).json({ error: 'Notes are required' });
+
+  try {
+    const result = db.prepare('UPDATE progress_reviews SET notes = ? WHERE id = ?').run(notes, reviewId);
+    if (result.changes === 0) return res.status(404).json({ error: 'Review not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/manager/progress-reviews/:reviewId
+router.delete('/progress-reviews/:reviewId', (req, res) => {
+  const { reviewId } = req.params;
+  try {
+    const result = db.prepare('DELETE FROM progress_reviews WHERE id = ?').run(reviewId);
+    if (result.changes === 0) return res.status(404).json({ error: 'Review not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/manager/progress-reviews/:userId
+router.get('/progress-reviews/:userId', (req, res) => {
+  const { userId } = req.params;
+  try {
+    const reviews = db.prepare(`
+      SELECT * FROM progress_reviews
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `).all(userId);
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

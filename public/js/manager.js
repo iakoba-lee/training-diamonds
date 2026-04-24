@@ -15,6 +15,7 @@ let editingUserId = null; // null = adding, number = editing
 let activeUserTodos = [];
 let activeTodo = null;
 let openAxes = {};
+let editingReviewId = null; // null = adding, number = editing
 
 // --- DOM Refs ---
 const teamTbody = document.getElementById('team-tbody');
@@ -27,20 +28,20 @@ const btnLogout = document.getElementById('btn-logout');
 
 // --- Chart config ---
 const DIAMOND_LABELS = {
-  1: ['Applications', 'OSs', 'Customer Service', 'Operations'],
-  2: ['Security', 'AV', 'Network', 'Project Management']
+  1: ['Applications', 'OSs', ['Customer', 'Service'], 'Operations'],
+  2: ['Security', 'AV', 'Network', ['Project', 'Management']]
 };
 
 const BASE_CHART_OPTIONS = {
   responsive: true,
   maintainAspectRatio: true,
-  layout: { padding: 25 },
+  layout: { padding: 0 },
   plugins: { legend: { display: false } },
   scales: {
     r: {
       min: 0, max: 5, beginAtZero: true,
-      ticks: { stepSize: 1, backdropColor: 'transparent', color: '#64748b', font: { size: 10 } },
-      pointLabels: { color: '#94a3b8', font: { size: 11, weight: '500', family: 'Inter' } },
+      ticks: { stepSize: 1, backdropColor: 'transparent', color: '#64748b', font: { size: 10 }, z: 10 },
+      pointLabels: { color: '#94a3b8', padding: 5, font: { size: 11, weight: '600', family: 'IBM Plex Sans' } },
       grid: { color: 'rgba(255,255,255,0.06)', circular: true },
       angleLines: { color: 'rgba(255,255,255,0.06)' }
     }
@@ -184,62 +185,122 @@ function renderTable() {
     expandTr.innerHTML = `
       <td colspan="${colspan}">
         <div class="expand-content ${isExpanded ? 'open' : ''}" id="expand-content-${user.id}">
-          <div class="expand-inner">
-            <div>
-              <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">💎 Diamond 1</h4>
-              <div class="chart-container">
-                <canvas id="expand-chart-d1-${user.id}"></canvas>
+          <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Radar Charts Grid -->
+            <div class="charts-grid" style="margin-bottom: 0;">
+              <div class="card" style="background: rgba(255,255,255,0.02);">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">💎 Diamond 1</div>
+                    <div class="card-subtitle">Current vs Aim Levels</div>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="expand-chart-d1-${user.id}"></canvas>
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">💎 Diamond 2</h4>
-              <div class="chart-container">
-                <canvas id="expand-chart-d2-${user.id}"></canvas>
-              </div>
-            </div>
-          </div>
-          <!-- User Learning Goals below charts -->
-          <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-            <h4 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 16px;">🎯 User Learning Goals</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-              <div>
-                <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 1</h5>
-                <div id="expand-todos-d1-${user.id}" style="display: flex; flex-direction: column; gap: 8px;"></div>
-              </div>
-              <div>
-                <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 2</h5>
-                <div id="expand-todos-d2-${user.id}" style="display: flex; flex-direction: column; gap: 8px;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Aim Update Panel -->
-          <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <div>
-                <h4 style="font-size: 1.1rem; color: var(--text-primary);">🎯 Set Growth Aims</h4>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Adjust the target goals for this user. Changes reflect live on the charts above.</p>
-              </div>
-              <span class="save-feedback" id="aim-save-feedback-${user.id}">✓ Saved</span>
-            </div>
-
-            <div class="update-grid">
-              <!-- Diamond 1 Aims -->
-              <div>
-                <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 1 Aims</h5>
-                <div id="aim-sliders-d1-${user.id}"></div>
-              </div>
-              <!-- Diamond 2 Aims -->
-              <div>
-                <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 2 Aims</h5>
-                <div id="aim-sliders-d2-${user.id}"></div>
+              <div class="card" style="background: rgba(255,255,255,0.02);">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">💎 Diamond 2</div>
+                    <div class="card-subtitle">Current vs Aim Levels</div>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="expand-chart-d2-${user.id}"></canvas>
+                </div>
               </div>
             </div>
 
-            <div style="margin-top: 24px; display: flex; justify-content: center;">
-              <button class="btn btn-primary" onclick="saveAimSnapshot(${user.id})" id="btn-save-aim-${user.id}" style="min-width: 180px;">
-                💾 Save Aims
-              </button>
+            <!-- Learning Goals Grid -->
+            <div class="charts-grid" style="margin-bottom: 0;">
+              <div class="card" style="background: rgba(255,255,255,0.02);">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">🎯 Diamond 1 Goals</div>
+                    <div class="card-subtitle">Actionable tasks for this user</div>
+                  </div>
+                </div>
+                <div id="expand-todos-d1-${user.id}" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+              <div class="card" style="background: rgba(255,255,255,0.02);">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">🎯 Diamond 2 Goals</div>
+                    <div class="card-subtitle">Actionable tasks for this user</div>
+                  </div>
+                </div>
+                <div id="expand-todos-d2-${user.id}" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Review Section -->
+            <div class="card" style="background: rgba(255,255,255,0.02);">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <div>
+                  <div class="card-title">📝 Progress Reviews</div>
+                  <div class="card-subtitle">Performance discussions and feedback history</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="toggleNewReviewForm(${user.id})">
+                  + New Review
+                </button>
+              </div>
+
+              <!-- Collapsible New Review Form -->
+              <div id="new-review-form-${user.id}" style="display: none; margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.9rem;">Add Review Notes</h5>
+                <textarea id="review-notes-${user.id}" 
+                          style="width: 100%; min-height: 100px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); padding: 12px; font-family: inherit; resize: vertical;"
+                          placeholder="Type review notes here..."></textarea>
+                <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
+                  <button class="btn btn-secondary btn-sm" onclick="toggleNewReviewForm(${user.id})">Cancel</button>
+                  <button class="btn btn-primary btn-sm" onclick="saveProgressReview(${user.id})" id="btn-save-review-${user.id}">
+                    💾 Save Review
+                  </button>
+                </div>
+              </div>
+
+              <!-- Past Reviews List -->
+              <div id="past-reviews-${user.id}" 
+                   class="past-reviews-scroll"
+                   style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Quick Aim Update Panel -->
+            <div class="card" style="background: rgba(255,255,255,0.02);">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🎯 Set Growth Aims</div>
+                  <div class="card-subtitle">Adjust the target goals for this user. Changes reflect live on the charts above.</div>
+                </div>
+                <span class="save-feedback" id="aim-save-feedback-${user.id}">✓ Saved</span>
+              </div>
+
+              <div class="update-grid">
+                <!-- Diamond 1 Aims -->
+                <div>
+                  <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 1 Aims</h5>
+                  <div id="aim-sliders-d1-${user.id}"></div>
+                </div>
+                <!-- Diamond 2 Aims -->
+                <div>
+                  <h5 style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem;">Diamond 2 Aims</h5>
+                  <div id="aim-sliders-d2-${user.id}"></div>
+                </div>
+              </div>
+
+              <div style="margin-top: 24px; display: flex; justify-content: center;">
+                <button class="btn btn-primary" onclick="saveAimSnapshot(${user.id})" id="btn-save-aim-${user.id}" style="min-width: 180px;">
+                  💾 Save Aims
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -255,6 +316,7 @@ function renderTable() {
       renderExpandCharts(user);
       renderUserTodosForExpand(expandedUserId);
       renderAimSliders(user);
+      loadUserProgressReviews(expandedUserId);
     }
   }
 
@@ -268,13 +330,12 @@ function renderTable() {
     });
 
     document.querySelectorAll('.delete-user-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const id = btn.dataset.id;
-        const name = btn.dataset.name;
-        if (confirm(`Remove "${name}" and all their skill data?`)) {
+        showInlineConfirm(e, async () => {
           await deleteUser(id);
-        }
+        });
       });
     });
   }
@@ -302,7 +363,10 @@ async function toggleExpand(userId) {
   const user = teamData.find(u => u.id === userId);
   if (user) {
     renderExpandCharts(user);
-    await loadUserTodosForExpand(userId);
+    await Promise.all([
+      loadUserTodosForExpand(userId),
+      loadUserProgressReviews(userId)
+    ]);
     renderAimSliders(user);
   }
 }
@@ -481,7 +545,7 @@ function renderDiamondTodosExpand(diamond, userId) {
 
   const dTodos = activeUserTodos.filter(t => t.diamond === diamond);
   if (dTodos.length === 0) {
-    listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No tasks assigned.</p>';
+    listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem; padding: 24px 0; text-align: center;">No tasks assigned.</p>';
     return;
   }
 
@@ -503,15 +567,18 @@ function renderDiamondTodosExpand(diamond, userId) {
     const isOpen = openAxes[`${userId}-${diamond}-${axis}`];
 
     html += `
-      <div class="axis-group" style="margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.2);">
-        <div class="axis-header" onclick="toggleExpandAxis(${userId}, ${diamond}, ${axis})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="dropdown-caret" id="expand-caret-${userId}-${diamond}-${axis}" style="display: inline-block; transition: transform 0.3s ease; color: var(--text-muted); font-size: 0.8rem; ${isOpen ? 'transform: rotate(90deg);' : ''}">▶</span>
-            <strong style="color: var(--text-primary); font-size: 0.9rem;">${axisName}</strong>
+      <div class="axis-group" style="margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; background: rgba(0,0,0,0.2);">
+        <div class="axis-header" onclick="toggleExpandAxis(${userId}, ${diamond}, ${axis})" 
+             style="cursor: pointer; padding: 12px 16px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="dropdown-caret" id="expand-caret-${userId}-${diamond}-${axis}" 
+                  style="display: inline-block; transition: transform 0.3s ease; color: var(--text-muted); font-size: 0.8rem; ${isOpen ? 'transform: rotate(90deg);' : ''}">▶</span>
+            <strong style="color: var(--text-primary); font-size: 0.9rem; letter-spacing: 0.01em;">${axisName}</strong>
           </div>
-          <span style="font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 2px 8px; border-radius: 12px; font-weight: 600;">${completedCount} / ${totalCount}</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 4px 10px; border-radius: 12px; font-weight: 600; border: 1px solid var(--border-subtle);">${completedCount} / ${totalCount}</span>
         </div>
-        <div class="axis-content" id="expand-axis-content-${userId}-${diamond}-${axis}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
+        <div class="axis-content" id="expand-axis-content-${userId}-${diamond}-${axis}" 
+             style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
     `;
 
     const levels = { 1: [], 2: [], 3: [], 4: [], 5: [] };
@@ -529,9 +596,9 @@ function renderDiamondTodosExpand(diamond, userId) {
       const isLocked = previousLevelIncomplete;
 
       html += `
-          <div class="level-group" style="margin: 6px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 10px;">
-            <h5 style="font-size: 0.8rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-              Level ${l} ${isLocked ? '<span style="font-size: 0.7rem;">(Locked)</span>' : ''}
+          <div class="level-group" style="margin: 10px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 14px;">
+            <h5 style="font-size: 0.8rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
+              Level ${l} ${isLocked ? '<span style="font-size: 0.7rem; opacity: 0.7;">(Locked)</span>' : ''}
             </h5>
       `;
 
@@ -540,26 +607,31 @@ function renderDiamondTodosExpand(diamond, userId) {
         const isDone = status === 'completed';
         const isAwaiting = status === 'awaiting_approval';
 
-        let icon = '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
+        let icon = '<span style="color: var(--text-muted); font-size: 0.85rem; opacity: 0.5;">○</span>';
         let textStyle = '';
         let extraText = '';
 
         if (isAwaiting) {
-          icon = '<span style="color: var(--accent-blue); font-weight: bold;">⏳</span>';
-          extraText = '<span style="font-size: 0.7rem; color: var(--accent-blue); padding-left: 6px;">(Awaiting Approval)</span>';
+          icon = '<span style="color: var(--accent-blue); font-weight: bold; filter: drop-shadow(0 0 4px rgba(59,130,246,0.3));">⏳</span>';
+          const submittedDate = t.completion.submitted_at ? new Date(t.completion.submitted_at).toLocaleDateString() : '';
+          extraText = `<span style="font-size: 0.7rem; color: var(--accent-blue); padding-left: 8px; font-weight: 500;">(Awaiting Approval${submittedDate ? ' · ' + submittedDate : ''})</span>`;
         } else if (isDone) {
-          icon = '<span style="color: var(--accent-green); font-weight: bold;">✓</span>';
-          textStyle = 'text-decoration: line-through; color: var(--text-muted);';
+          icon = '<span style="color: var(--accent-green); font-weight: bold; filter: drop-shadow(0 0 4px rgba(16,185,129,0.3));">✓</span>';
+          textStyle = 'text-decoration: line-through; color: var(--text-muted); opacity: 0.8;';
+          const approvedDate = t.completion.completed_at ? new Date(t.completion.completed_at).toLocaleDateString() : '';
+          extraText = `<span style="font-size: 0.7rem; color: var(--accent-green); padding-left: 8px; font-weight: 500;">(Approved${approvedDate ? ' · ' + approvedDate : ''})</span>`;
         }
 
         const action = status === 'completed' ? 'deny' : 'approve';
 
         return `
-          <div class="todo-item-row ${isLocked ? 'locked' : ''}" onclick="openManagerLmsModal(${t.id})" style="cursor: pointer; padding: 6px 10px; display: flex; align-items: center; gap: 10px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02); ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : ''}" ${!isLocked ? 'onmouseover="this.style.background=\'var(--bg-card-hover)\'" onmouseout="this.style.background=\'transparent\'"' : ''}>
-            <span class="status-icon-tap" onclick="event.stopPropagation(); if(!${isLocked}) handleQuickApproval(${userId}, ${t.id}, '${action}')" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; transition: background 0.2s;" onmouseover="if(!${isLocked}) this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+          <div class="todo-item-row ${isLocked ? 'locked' : ''}" onclick="openManagerLmsModal(${t.id})" 
+               style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,0.03); border-radius: 4px; ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <span class="status-icon-tap" onclick="event.stopPropagation(); if(!${isLocked}) handleQuickApproval(${userId}, ${t.id}, '${action}')" 
+                  style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: background 0.2s;">
               ${icon}
             </span>
-            <span style="color: var(--text-primary); font-size: 0.85rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
+            <span style="color: var(--text-primary); font-size: 0.875rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
             ${extraText}
           </div>
         `;
@@ -635,28 +707,28 @@ function ensureManagerLmsModal() {
     btnLmsComplete.addEventListener('click', async () => {
       if (!activeTodo || !expandedUserId) return;
 
-      const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
-      let action = 'approve'; // default to grant
-      if (status === 'completed' || status === 'awaiting_approval') {
-        action = status === 'completed' ? 'deny' : 'approve';
+      const status = activeTodo.completion.status || (activeTodo.completion.completed ? "completed" : "incomplete");
+      let action = "approve"; // default to grant
+      if (status === "completed" || status === "awaiting_approval") {
+        action = status === "completed" ? "deny" : "approve";
       }
 
       try {
         btnLmsComplete.disabled = true;
-        btnLmsComplete.textContent = 'Processing...';
+        btnLmsComplete.textContent = "Processing...";
 
-        const res = await fetch('/api/todos/approvals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/todos/approvals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: expandedUserId, todoId: activeTodo.id, action })
         });
 
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error || 'Failed to update approval');
+          throw new Error(err.error || "Failed to update approval");
         }
 
-        showToast(action === 'approve' ? 'Status updated: Completed' : 'Status updated: Revoked', 'success');
+        showToast(action === "approve" ? "Status updated: Completed" : "Status updated: Revoked", "success");
 
         await loadUserTodosForExpand(expandedUserId);
 
@@ -669,11 +741,40 @@ function ensureManagerLmsModal() {
         await loadTeam();
 
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast(err.message, "error");
       } finally {
         btnLmsComplete.disabled = false;
       }
     });
+
+    // Tab Switching
+    const tabLmsInfo = document.getElementById('tab-lms-info');
+    const tabLmsNotes = document.getElementById('tab-lms-notes');
+    const paneLmsInfo = document.getElementById('lms-info-pane');
+    const paneLmsNotes = document.getElementById('lms-notes-pane');
+
+    tabLmsInfo.addEventListener('click', () => {
+      tabLmsInfo.classList.add('active');
+      tabLmsNotes.classList.remove('active');
+      tabLmsInfo.style.color = 'var(--text-primary)';
+      tabLmsInfo.style.borderBottomColor = 'var(--accent-blue)';
+      tabLmsNotes.style.color = 'var(--text-muted)';
+      tabLmsNotes.style.borderBottomColor = 'transparent';
+      paneLmsInfo.style.display = 'block';
+      paneLmsNotes.style.display = 'none';
+    });
+
+    tabLmsNotes.addEventListener('click', () => {
+      tabLmsNotes.classList.add('active');
+      tabLmsInfo.classList.remove('active');
+      tabLmsNotes.style.color = 'var(--text-primary)';
+      tabLmsNotes.style.borderBottomColor = 'var(--accent-blue)';
+      tabLmsInfo.style.color = 'var(--text-muted)';
+      tabLmsInfo.style.borderBottomColor = 'transparent';
+      paneLmsNotes.style.display = 'block';
+      paneLmsInfo.style.display = 'none';
+    });
+
     managerLmsModalReady = true;
   }
 }
@@ -697,6 +798,16 @@ window.openManagerLmsModal = function (todoId) {
   lmsTitle.textContent = t.title;
   lmsContent.innerHTML = marked.parse(t.content || '');
 
+  // Populate Notes
+  const displayNotes = document.getElementById('lms-user-notes-display');
+  if (displayNotes) {
+    const notes = (t.completion && t.completion.notes);
+    displayNotes.innerHTML = notes ? marked.parse(notes) : '<i style="color: var(--text-muted);">No notes provided by user.</i>';
+  }
+
+  // Reset Tab
+  document.getElementById('tab-lms-info').click();
+
   updateManagerLmsButtonState();
   lmsModal.classList.add('visible');
 };
@@ -709,13 +820,15 @@ function updateManagerLmsButtonState() {
   const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
 
   if (status === 'completed') {
-    lmsStatus.textContent = 'Status: Completed ✓';
+    const approvedDate = activeTodo.completion.completed_at ? new Date(activeTodo.completion.completed_at).toLocaleDateString() : '';
+    lmsStatus.textContent = `Status: Completed ✓ ${approvedDate ? '(' + approvedDate + ')' : ''}`;
     lmsStatus.style.color = '#10b981';
     btnLmsComplete.textContent = 'Revoke Completion ✕';
     btnLmsComplete.className = 'btn btn-secondary';
     btnLmsComplete.style.color = '#ef4444';
   } else if (status === 'awaiting_approval') {
-    lmsStatus.textContent = 'Status: Awaiting Approval ⏳';
+    const submittedDate = activeTodo.completion.submitted_at ? new Date(activeTodo.completion.submitted_at).toLocaleDateString() : '';
+    lmsStatus.textContent = `Status: Awaiting Approval ⏳ ${submittedDate ? '(' + submittedDate + ')' : ''}`;
     lmsStatus.style.color = '#3b82f6';
     btnLmsComplete.textContent = 'Grant Completion ✓';
     btnLmsComplete.className = 'btn btn-primary';
@@ -728,6 +841,173 @@ function updateManagerLmsButtonState() {
     btnLmsComplete.style.color = '';
   }
 }
+
+// --- Progress Reviews ---
+window.toggleNewReviewForm = function (userId) {
+  const form = document.getElementById(`new-review-form-${userId}`);
+  if (!form) return;
+  
+  if (form.style.display === 'block') {
+    // Closing
+    form.style.display = 'none';
+    editingReviewId = null;
+    const btn = document.getElementById(`btn-save-review-${userId}`);
+    if (btn) btn.textContent = '💾 Save Review';
+    const textarea = document.getElementById(`review-notes-${userId}`);
+    if (textarea) textarea.value = '';
+  } else {
+    // Opening
+    form.style.display = 'block';
+    const textarea = document.getElementById(`review-notes-${userId}`);
+    if (textarea) textarea.focus();
+  }
+};
+
+window.editProgressReview = function (reviewId, userId) {
+  const fullTextEl = document.getElementById(`review-full-${reviewId}`);
+  if (!fullTextEl) return;
+  
+  const notes = fullTextEl.textContent.trim();
+  const notesEl = document.getElementById(`review-notes-${userId}`);
+  const btn = document.getElementById(`btn-save-review-${userId}`);
+  const form = document.getElementById(`new-review-form-${userId}`);
+
+  editingReviewId = reviewId;
+  notesEl.value = notes;
+  btn.textContent = '💾 Update Review';
+  
+  if (form.style.display === 'none') {
+    // Open the form
+    form.style.display = 'block';
+  }
+  notesEl.focus();
+  
+  // Scroll to form if needed
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+window.deleteProgressReview = function (event, reviewId, userId) {
+  showInlineConfirm(event, async () => {
+    try {
+      const res = await fetch(`/api/manager/progress-reviews/${reviewId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete review');
+      showToast('Review deleted', 'success');
+      await loadUserProgressReviews(userId);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
+};
+
+window.toggleReviewExpand = function (reviewId) {
+  const summary = document.getElementById(`review-summary-${reviewId}`);
+  const full = document.getElementById(`review-full-${reviewId}`);
+  const caret = document.getElementById(`review-caret-${reviewId}`);
+
+  if (full.style.display === 'none') {
+    full.style.display = 'block';
+    summary.style.display = 'none';
+    if (caret) caret.style.transform = 'rotate(90deg)';
+  } else {
+    full.style.display = 'none';
+    summary.style.display = 'block';
+    if (caret) caret.style.transform = 'rotate(0deg)';
+  }
+};
+
+window.loadUserProgressReviews = async function (userId) {
+  const listEl = document.getElementById(`past-reviews-${userId}`);
+  if (!listEl) return;
+
+  try {
+    const res = await fetch(`/api/manager/progress-reviews/${userId}`);
+    if (!res.ok) throw new Error('Failed to load reviews');
+    const reviews = await res.json();
+
+    if (reviews.length === 0) {
+      listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">No past reviews found.</p>';
+      return;
+    }
+
+    listEl.innerHTML = reviews.map(r => {
+      const dateStr = new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Get first few words for summary
+      const words = r.notes.trim().split(/\s+/);
+      const summaryText = words.slice(0, 10).join(' ') + (words.length > 10 ? '...' : '');
+
+      return `
+        <div class="review-item" onclick="toggleReviewExpand(${r.id})" 
+             style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px; cursor: pointer; transition: background 0.2s;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="review-caret-${r.id}" style="display: inline-block; transition: transform 0.2s; font-size: 0.7rem; color: var(--text-muted);">▶</span>
+              <strong style="font-size: 0.85rem; color: var(--accent-blue);">${dateStr}</strong>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation()">
+              <span style="font-size: 0.7rem; color: var(--text-muted);">${timeStr}</span>
+              <button class="btn btn-secondary btn-sm" onclick="editProgressReview(${r.id}, ${userId})" title="Edit Review" style="padding: 2px 6px; font-size: 0.7rem;">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProgressReview(event, ${r.id}, ${userId})" title="Delete Review" style="padding: 2px 6px; font-size: 0.7rem;">✕</button>
+            </div>
+          </div>
+          <div id="review-summary-${r.id}" style="font-size: 0.875rem; color: var(--text-secondary); margin-left: 20px;">
+            ${escapeHtml(summaryText)}
+          </div>
+          <div id="review-full-${r.id}" style="display: none; font-size: 0.875rem; color: var(--text-primary); margin-left: 20px; white-space: pre-wrap; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px;">${escapeHtml(r.notes)}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    listEl.innerHTML = '<p style="color: var(--accent-red); font-size: 0.8rem; text-align: center; padding: 12px;">Error loading reviews</p>';
+  }
+};
+
+window.saveProgressReview = async function (userId) {
+  const notesEl = document.getElementById(`review-notes-${userId}`);
+  const btn = document.getElementById(`btn-save-review-${userId}`);
+  const notes = notesEl.value.trim();
+
+  if (!notes) {
+    showToast('Please enter review notes', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = editingReviewId ? 'Updating...' : 'Saving...';
+
+  try {
+    const url = editingReviewId 
+      ? `/api/manager/progress-reviews/${editingReviewId}` 
+      : `/api/manager/progress-reviews/${userId}`;
+    const method = editingReviewId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes })
+    });
+
+    if (!res.ok) throw new Error('Failed to save review');
+
+    showToast(editingReviewId ? 'Review updated!' : 'Progress review saved!', 'success');
+    notesEl.value = '';
+    
+    // Reset editing state
+    editingReviewId = null;
+    btn.textContent = '💾 Save Review';
+    
+    toggleNewReviewForm(userId);
+    await loadUserProgressReviews(userId);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingReviewId ? '💾 Update Review' : '💾 Save Review';
+  }
+};
 
 // --- Team Averages ---
 function renderTeamAverages() {
@@ -954,7 +1234,7 @@ function updateAxisLabels() {
   const labels = DIAMOND_LABELS[diamond];
 
   axisSelect.innerHTML = labels.map((label, i) => {
-    const displayLabel = label.replace('\n', ' ');
+    const displayLabel = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
     return `<option value="${i + 1}">${displayLabel}</option>`;
   }).join('').trim();
 
@@ -984,7 +1264,7 @@ function renderManagerTodos() {
           </div>
           <div style="display: flex; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
             <button class="btn btn-secondary btn-sm" onclick="editTodo(${t.id})" title="Edit Task">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTodo(${t.id})" title="Delete Task">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTodo(event, ${t.id})" title="Delete Task">✕</button>
           </div>
         </div>
         ${isPreviewing ? `
@@ -1073,16 +1353,17 @@ async function addTodo() {
   }
 }
 
-window.deleteTodo = async function (id) {
-  if (!confirm('Are you sure you want to delete this task?')) return;
-  try {
-    const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete task');
-    showToast('Task deleted', 'success');
-    await loadManagerTodos();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+window.deleteTodo = function (event, id) {
+  showInlineConfirm(event, async () => {
+    try {
+      const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete task');
+      showToast('Task deleted', 'success');
+      await loadManagerTodos();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
 };
 
 function setupTodoManager() {
@@ -1121,28 +1402,45 @@ function renderPendingApprovals(pending) {
   listEl.innerHTML = pending.map(p => {
     // Determine Axis name
     const diamondAxes = DIAMOND_LABELS[p.diamond];
-    const axisName = diamondAxes ? String(diamondAxes[p.axis - 1]).replace('\n', ' ') : `Axis ${p.axis}`;
+    let label = diamondAxes ? diamondAxes[p.axis - 1] : `Axis ${p.axis}`;
+    const axisName = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
 
     return `
-      <div class="card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-        <div style="flex: 1;">
-          <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: var(--text-primary);">
-            <span style="color: var(--text-muted); font-weight: normal; margin-right: 8px;">👤 ${escapeHtml(p.display_name)}</span>
-            ${escapeHtml(p.title)}
-          </h4>
-          <div style="font-size: 0.8rem; color: var(--text-secondary);">
-            💎 Diamond ${p.diamond} · ${axisName} · Level ${p.level} <br/>
-            <span style="color: var(--text-muted);">Requested: ${new Date(p.completed_at).toLocaleString()}</span>
+      <div class="card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
+          <div style="flex: 1;">
+            <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: var(--text-primary);">
+              <span style="color: var(--text-muted); font-weight: normal; margin-right: 8px;">👤 ${escapeHtml(p.display_name)}</span>
+              ${escapeHtml(p.title)}
+            </h4>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+              💎 Diamond ${p.diamond} · ${axisName} · Level ${p.level} <br/>
+              <span style="color: var(--text-muted);">Submitted: ${new Date(p.submitted_at || p.completed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-shrink: 0;">
+            ${p.notes ? `<button class="btn btn-secondary btn-sm" onclick="togglePendingNotes(${p.user_id}, ${p.todo_id})">📝 View Notes</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'approve')">✓ Approve</button>
+            <button class="btn btn-secondary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'deny')" style="color: #ef4444;">✕ Deny</button>
           </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-shrink: 0;">
-          <button class="btn btn-primary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'approve')">✓ Approve</button>
-          <button class="btn btn-secondary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'deny')" style="color: #ef4444;">✕ Deny</button>
-        </div>
+        ${p.notes ? `
+          <div id="pending-notes-${p.user_id}-${p.todo_id}" style="display: none; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.95rem; color: var(--text-secondary); width: 100%; line-height: 1.6;">
+            <strong style="display: block; margin-bottom: 12px; color: var(--text-primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">User Notes:</strong>
+            <div class="markdown-content">${marked.parse(p.notes)}</div>
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
 }
+
+window.togglePendingNotes = function(userId, todoId) {
+  const el = document.getElementById(`pending-notes-${userId}-${todoId}`);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+};
 
 window.handleApproval = async function (userId, todoId, action) {
   try {
@@ -1193,6 +1491,82 @@ function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// --- Inline Confirm Popup ---
+let currentConfirmCallback = null;
+let currentConfirmPopup = null;
+
+function showInlineConfirm(event, callback) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (!currentConfirmPopup) {
+    currentConfirmPopup = document.createElement('div');
+    currentConfirmPopup.className = 'inline-confirm-popup';
+    currentConfirmPopup.style.cssText = `
+      position: absolute;
+      z-index: 10000;
+      background: #0f172a;
+      border: 1px solid var(--byu-royal, #0057b8);
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    `;
+    
+    currentConfirmPopup.innerHTML = `
+      <span style="font-size:0.85rem; color:var(--text-primary, #fff); font-weight:500;">Are you sure?</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-danger btn-sm" id="inline-confirm-yes" style="padding: 2px 8px; font-size: 0.8rem;">Yes</button>
+        <button class="btn btn-secondary btn-sm" id="inline-confirm-no" style="padding: 2px 8px; font-size: 0.8rem;">No</button>
+      </div>
+    `;
+    
+    document.body.appendChild(currentConfirmPopup);
+    
+    document.getElementById('inline-confirm-yes').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentConfirmCallback) currentConfirmCallback();
+      hideInlineConfirm();
+    });
+    
+    document.getElementById('inline-confirm-no').addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideInlineConfirm();
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (currentConfirmPopup && !currentConfirmPopup.contains(e.target) && !e.target.closest('.delete-user-btn') && !e.target.closest('[title="Delete Review"]') && !e.target.closest('[title="Delete Task"]')) {
+        hideInlineConfirm();
+      }
+    });
+  }
+  
+  currentConfirmCallback = callback;
+  
+  const rect = event.currentTarget.getBoundingClientRect();
+  currentConfirmPopup.style.display = 'flex';
+  
+  const top = rect.top + window.scrollY - 10;
+  const left = rect.right + window.scrollX + 10;
+  
+  currentConfirmPopup.style.top = `${top}px`;
+  
+  if (left + 200 > window.innerWidth) {
+    currentConfirmPopup.style.left = `${rect.left + window.scrollX - 200}px`;
+  } else {
+    currentConfirmPopup.style.left = `${left}px`;
+  }
+}
+
+function hideInlineConfirm() {
+  if (currentConfirmPopup) {
+    currentConfirmPopup.style.display = 'none';
+  }
+  currentConfirmCallback = null;
 }
 
 function escapeHtml(str) {

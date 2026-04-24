@@ -186,10 +186,35 @@
         <button class="btn btn-secondary btn-sm" id="btn-lms-close"
           style="border-radius: 50%; padding: 8px 12px; flex-shrink: 0;">✕</button>
       </div>
-      <div id="lms-content"
-        style="flex: 1; overflow-y: auto; padding-right: 8px; line-height: 1.6; color: var(--text-secondary); font-size: 1.05rem;">
-        <!-- Markdown/Text content here -->
+      
+      <!-- Tabs -->
+      <div class="modal-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+        <button class="modal-tab active" id="tab-lms-info" style="background: none; border: none; padding: 8px 0; color: var(--text-primary); font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--accent-blue);">Task Info</button>
+        <button class="modal-tab" id="tab-lms-notes" style="background: none; border: none; padding: 8px 0; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent;">Notes</button>
       </div>
+
+      <!-- Info Pane -->
+      <div id="lms-info-pane" style="flex: 1; overflow-y: auto; padding-right: 8px; line-height: 1.6; color: var(--text-secondary); font-size: 1.05rem;">
+        <div id="lms-content"></div>
+      </div>
+
+      <!-- Notes Pane -->
+      <div id="lms-notes-pane" style="flex: 1; display: none; flex-direction: column; gap: 12px;">
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Notes entered here are visible to you and your manager. <b>Markdown supported</b> (lists, bold, etc).</p>
+        
+        <!-- View Mode -->
+        <div id="lms-notes-view" class="markdown-content" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 16px; color: var(--text-secondary); line-height: 1.6;"></div>
+        
+        <!-- Edit Mode -->
+        <textarea id="lms-notes-input" style="display: none;" placeholder="Add notes about your progress, questions, or completion details..."></textarea>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" id="btn-edit-notes">Edit Notes</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-notes" style="display: none;">Save Notes</button>
+          <button class="btn btn-secondary btn-sm" id="btn-cancel-notes" style="display: none;">Cancel</button>
+        </div>
+      </div>
+
       <div
         style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
         <span id="lms-status" style="font-size: 0.95rem; font-weight: 500;"></span>

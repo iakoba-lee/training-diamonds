@@ -63,9 +63,19 @@ db.exec(`
     completed BOOLEAN NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'incomplete' CHECK(status IN ('incomplete', 'awaiting_approval', 'completed')),
     completed_at DATETIME,
+    submitted_at DATETIME,
+    notes TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE,
     UNIQUE(user_id, todo_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS progress_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    notes TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 `);
 
@@ -79,6 +89,20 @@ try {
 // Add 'status' column migration to user_todos
 try {
   db.exec("ALTER TABLE user_todos ADD COLUMN status TEXT NOT NULL DEFAULT 'incomplete' CHECK(status IN ('incomplete', 'awaiting_approval', 'completed'))");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'submitted_at' column migration to user_todos
+try {
+  db.exec("ALTER TABLE user_todos ADD COLUMN submitted_at DATETIME");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'notes' column migration to user_todos
+try {
+  db.exec("ALTER TABLE user_todos ADD COLUMN notes TEXT");
 } catch (e) {
   // Column already exists
 }

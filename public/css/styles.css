@@ -389,8 +389,8 @@ textarea {
 .chart-container {
   position: relative;
   width: 100%;
-  max-width: 380px;
-  height: 380px;
+  max-width: 320px;
+  height: 320px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -754,6 +754,11 @@ input[type="range"].slider-current {
 
 .expand-content.open {
   max-height: 2000px;
+}
+
+.expand-content .card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: none;
 }
 
 .expand-inner {
@@ -1495,3 +1500,153 @@ input[type="range"].slider-current {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Progress Reviews --- */
+.past-reviews-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-blue) rgba(0, 0, 0, 0.1);
+}
+
+.past-reviews-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.past-reviews-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.past-reviews-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--accent-blue);
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .review-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* --- Modal Tabs --- */
+.modal-tab {
+  transition: all var(--transition-fast);
+}
+
+.modal-tab:hover {
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--border-hover) !important;
+}
+
+.modal-tab.active {
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--accent-blue) !important;
+}
+
+#lms-notes-input:focus {
+  border-color: var(--accent-blue);
+  background: rgba(0,0,0,0.3);
+}
+
+.past-reviews-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.past-reviews-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.past-reviews-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 10px;
+}
+
+.past-reviews-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* --- Notes Input Specifics --- */
+#lms-notes-input {
+  flex: 1;
+  width: 100%;
+  min-height: 150px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+  transition: all var(--transition-fast);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#lms-notes-input:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#lms-notes-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 87, 184, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#lms-notes-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* --- Markdown Content Styling --- */
+.markdown-content ul, .markdown-content ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+.markdown-content p {
+  margin-bottom: 12px;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.markdown-content code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid var(--accent-blue);
+  padding-left: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 12px 0;
+}
+
+/* --- Notes View Mode --- */
+#lms-notes-view {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  overflow-y: auto;
+  transition: border-color var(--transition-fast);
+}
+
+#lms-notes-view:hover {
+  border-color: var(--border-hover);
+}
+
+#lms-notes-view { cursor: pointer; }

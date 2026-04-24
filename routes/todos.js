@@ -73,18 +73,30 @@ router.get('/', (req, res) => {
 
     if (userId) {
       const completions = db.prepare(`
-        SELECT todo_id, completed, status, completed_at
+        SELECT todo_id, completed, status, completed_at, submitted_at, notes
         FROM user_todos
         WHERE user_id = ?
       `).all(userId);
 
       const completedMap = {};
       for (const row of completions) {
-        completedMap[row.todo_id] = { completed: row.completed, status: row.status, completed_at: row.completed_at };
+        completedMap[row.todo_id] = { 
+          completed: row.completed, 
+          status: row.status, 
+          completed_at: row.completed_at,
+          submitted_at: row.submitted_at,
+          notes: row.notes
+        };
       }
 
       for (const todo of todos) {
-        todo.completion = completedMap[todo.id] || { completed: 0, status: 'incomplete', completed_at: null };
+        todo.completion = completedMap[todo.id] || { 
+          completed: 0, 
+          status: 'incomplete', 
+          completed_at: null,
+          submitted_at: null,
+          notes: ''
+        };
       }
     }
 
@@ -174,12 +186,13 @@ router.post('/:id/complete', (req, res) => {
     // Wait, let's keep completed=1 so it appears checked on the frontend until approved.
     
     db.prepare(`
-      INSERT INTO user_todos (user_id, todo_id, completed, status, completed_at)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO user_todos (user_id, todo_id, completed, status, completed_at, submitted_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ${completed ? 'CURRENT_TIMESTAMP' : 'NULL'})
       ON CONFLICT(user_id, todo_id) DO UPDATE SET
         completed = excluded.completed,
         status = excluded.status,
-        completed_at = CURRENT_TIMESTAMP
+        completed_at = CURRENT_TIMESTAMP,
+        submitted_at = ${completed ? 'CURRENT_TIMESTAMP' : 'NULL'}
     `).run(userId, id, completed ? 1 : 0, newStatus);
 
     const statusRow = db.prepare('SELECT * FROM user_todos WHERE user_id = ? AND todo_id = ?').get(userId, id);
@@ -195,16 +208,39 @@ router.post('/:id/complete', (req, res) => {
   }
 });
 
+// POST /api/todos/:id/notes - User saves notes for a todo
+router.post('/:id/notes', (req, res) => {
+  const { id } = req.params;
+  const { notes, userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+
+  try {
+    db.prepare(`
+      INSERT INTO user_todos (user_id, todo_id, notes)
+      VALUES (?, ?, ?)
+      ON CONFLICT(user_id, todo_id) DO UPDATE SET
+        notes = excluded.notes
+    `).run(userId, id, notes);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/todos/pending-approvals - Manager only
 router.get('/pending-approvals', requireManager, (req, res) => {
   try {
     const pending = db.prepare(`
-      SELECT ut.user_id, ut.todo_id, ut.completed_at, u.display_name, u.team, t.title, t.diamond, t.axis, t.level
+      SELECT ut.user_id, ut.todo_id, ut.completed_at, ut.submitted_at, ut.notes, u.display_name, u.team, t.title, t.diamond, t.axis, t.level
       FROM user_todos ut
       JOIN users u ON ut.user_id = u.id
       JOIN todos t ON ut.todo_id = t.id
       WHERE ut.status = 'awaiting_approval'
-      ORDER BY ut.completed_at ASC
+      ORDER BY ut.submitted_at ASC
     `).all();
     res.json(pending);
   } catch (err) {

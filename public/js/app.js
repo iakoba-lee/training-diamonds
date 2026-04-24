@@ -27,7 +27,7 @@ const btnLogout = document.getElementById('btn-logout');
 // --- Chart Configuration ---
 const DIAMOND_LABELS = {
   1: ['Applications', 'OSs', ['Customer', 'Service'], 'Operations'],
-  2: ['Security', 'AV', 'Network', 'Project Management']
+  2: ['Security', 'AV', 'Network', ['Project', 'Management']]
 };
 
 const CHART_OPTIONS = {
@@ -48,12 +48,13 @@ const CHART_OPTIONS = {
         stepSize: 1,
         backdropColor: 'transparent',
         color: '#64748b',
-        font: { size: 10 }
+        font: { size: 10 },
+        z: 10
       },
       pointLabels: {
         color: '#94a3b8',
         padding: 5,
-        font: { size: 11, weight: '500', family: 'Inter' }
+        font: { size: 11, weight: '600', family: 'IBM Plex Sans' }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.06)',
@@ -338,34 +339,34 @@ function renderTodos() {
 function renderDiamondTodos(diamond, containerEl, listEl) {
   const dTodos = userTodos.filter(t => t.diamond === diamond);
   const emptyEl = document.getElementById(`d${diamond}-goals-empty`);
-  
+
   if (dTodos.length === 0) {
     containerEl.style.display = 'none';
     if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
-  
+
   containerEl.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
-  
+
   const byAxis = { 1: [], 2: [], 3: [], 4: [] };
   dTodos.forEach(t => byAxis[t.axis].push(t));
 
   let html = '';
   for (let axis = 1; axis <= 4; axis++) {
     if (byAxis[axis].length === 0) continue;
-    
+
     // Flatten array labels
     let label = DIAMOND_LABELS[diamond][axis - 1];
     if (Array.isArray(label)) label = label.join(' ');
     const axisName = label;
-    
+
     const axisTodos = byAxis[axis];
     const completedCount = axisTodos.filter(t => t.completion.completed).length;
     const totalCount = axisTodos.length;
-    
+
     const isOpen = openAxes[`${diamond}-${axis}`];
-    
+
     html += `
       <div class="axis-group" style="margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.2);">
         <div class="axis-header" onclick="toggleAxis(${diamond}, ${axis})" style="cursor: pointer; padding: 14px 16px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
@@ -377,42 +378,43 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
         </div>
         <div class="axis-content" id="axis-content-${diamond}-${axis}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
     `;
-    
+
     // Group by level
     const levels = { 1: [], 2: [], 3: [], 4: [], 5: [] };
     axisTodos.forEach(t => {
       const lvl = t.level || 1;
       if (levels[lvl]) levels[lvl].push(t);
     });
-    
+
     // Check locked state for each level
     let previousLevelIncomplete = false;
     for (let l = 1; l <= 5; l++) {
       if (levels[l].length === 0) continue;
-      
+
       const levelTodos = levels[l];
       const isLevelComplete = levelTodos.every(t => t.completion.completed);
       const isLocked = previousLevelIncomplete;
-      
+
       html += `
           <div class="level-group" style="margin: 8px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 12px;">
             <h5 style="font-size: 0.85rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
               Level ${l} ${isLocked ? '<span style="font-size: 0.75rem;">(Locked)</span>' : ''}
             </h5>
       `;
-      
+
       html += levelTodos.map(t => {
         const status = t.completion.status || (t.completion.completed ? 'completed' : 'incomplete');
         const isDone = status === 'completed';
         const isAwaiting = status === 'awaiting_approval';
-        
+
         let icon = '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
         let textStyle = '';
         let extraText = '';
-        
+
         if (isAwaiting) {
           icon = '<span style="color: var(--accent-blue); font-weight: bold;">⏳</span>';
-          extraText = '<span style="font-size: 0.75rem; color: var(--accent-blue); padding-left: 8px;">(Awaiting Approval)</span>';
+          const submittedDate = t.completion.submitted_at ? new Date(t.completion.submitted_at).toLocaleDateString() : '';
+          extraText = `<span style="font-size: 0.75rem; color: var(--accent-blue); padding-left: 8px;">(Awaiting Approval${submittedDate ? ' · ' + submittedDate : ''})</span>`;
         } else if (isDone) {
           icon = '<span style="color: var(--accent-green); font-weight: bold;">✓</span>';
           textStyle = 'text-decoration: line-through; color: var(--text-muted);';
@@ -436,14 +438,14 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
           `;
         }
       }).join('');
-      
+
       html += `</div>`; // Close level-group
-      
+
       if (!isLevelComplete) {
         previousLevelIncomplete = true;
       }
     }
-    
+
     html += `
         </div>
       </div>
@@ -452,10 +454,10 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
   listEl.innerHTML = html;
 }
 
-window.toggleAxis = function(diamond, axis) {
+window.toggleAxis = function (diamond, axis) {
   const el = document.getElementById(`axis-content-${diamond}-${axis}`);
   const caret = document.getElementById(`caret-${diamond}-${axis}`);
-  
+
   if (el.style.display === 'none') {
     el.style.display = 'block';
     if (caret) caret.style.transform = 'rotate(90deg)';
@@ -475,23 +477,110 @@ const lmsStatus = document.getElementById('lms-status');
 const btnLmsComplete = document.getElementById('btn-lms-complete');
 const btnLmsClose = document.getElementById('btn-lms-close');
 
+const tabLmsInfo = document.getElementById('tab-lms-info');
+const tabLmsNotes = document.getElementById('tab-lms-notes');
+const paneLmsInfo = document.getElementById('lms-info-pane');
+const paneLmsNotes = document.getElementById('lms-notes-pane');
+const lmsNotesInput = document.getElementById('lms-notes-input');
+const lmsNotesView = document.getElementById('lms-notes-view');
+const btnSaveNotes = document.getElementById('btn-save-notes');
+const btnEditNotes = document.getElementById('btn-edit-notes');
+const btnCancelNotes = document.getElementById('btn-cancel-notes');
+
 if (btnLmsClose) {
   btnLmsClose.addEventListener('click', () => lmsModal.classList.remove('visible'));
   lmsModal.addEventListener('click', (e) => {
     if (e.target === lmsModal) lmsModal.classList.remove('visible');
   });
 
+  // Tab Switching
+  tabLmsInfo.addEventListener('click', () => {
+    tabLmsInfo.classList.add('active');
+    tabLmsNotes.classList.remove('active');
+    tabLmsInfo.style.color = 'var(--text-primary)';
+    tabLmsInfo.style.borderBottomColor = 'var(--accent-blue)';
+    tabLmsNotes.style.color = 'var(--text-muted)';
+    tabLmsNotes.style.borderBottomColor = 'transparent';
+    paneLmsInfo.style.display = 'block';
+    paneLmsNotes.style.display = 'none';
+  });
+
+  tabLmsNotes.addEventListener('click', () => {
+    tabLmsNotes.classList.add('active');
+    tabLmsInfo.classList.remove('active');
+    tabLmsNotes.style.color = 'var(--text-primary)';
+    tabLmsNotes.style.borderBottomColor = 'var(--accent-blue)';
+    tabLmsInfo.style.color = 'var(--text-muted)';
+    tabLmsInfo.style.borderBottomColor = 'transparent';
+    paneLmsNotes.style.display = 'flex';
+    paneLmsInfo.style.display = 'none';
+  });
+
+  // Edit Mode Toggle
+  const startEditing = () => {
+    lmsNotesView.style.display = 'none';
+    lmsNotesInput.style.display = 'block';
+    btnEditNotes.style.display = 'none';
+    btnSaveNotes.style.display = 'inline-flex';
+    btnCancelNotes.style.display = 'inline-flex';
+    lmsNotesInput.focus();
+  };
+
+  btnEditNotes.addEventListener('click', startEditing);
+  lmsNotesView.addEventListener('click', startEditing);
+
+  btnCancelNotes.addEventListener('click', () => {
+    lmsNotesInput.value = activeTodo.completion.notes || '';
+    lmsNotesView.style.display = 'block';
+    lmsNotesInput.style.display = 'none';
+    btnEditNotes.style.display = 'inline-flex';
+    btnSaveNotes.style.display = 'none';
+    btnCancelNotes.style.display = 'none';
+  });
+
+  // Save Notes
+  btnSaveNotes.addEventListener('click', async () => {
+    if (!activeTodo || !currentUserId) return;
+    const notes = lmsNotesInput.value;
+
+    try {
+      btnSaveNotes.disabled = true;
+      const res = await fetch(`/api/todos/${activeTodo.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, notes })
+      });
+      if (!res.ok) throw new Error('Failed to save notes');
+
+      activeTodo.completion.notes = notes;
+      lmsNotesView.innerHTML = notes ? marked.parse(notes) : '<i style="color: var(--text-muted);">No notes yet. Click edit to add some!</i>';
+      
+      // Switch back to view mode
+      lmsNotesView.style.display = 'block';
+      lmsNotesInput.style.display = 'none';
+      btnEditNotes.style.display = 'inline-flex';
+      btnSaveNotes.style.display = 'none';
+      btnCancelNotes.style.display = 'none';
+
+      showToast('Notes saved successfully');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btnSaveNotes.disabled = false;
+    }
+  });
+
   btnLmsComplete.addEventListener('click', async () => {
     if (!activeTodo || !currentUserId) return;
-    
+
     // Managers should probably not check off tasks for the team from this interface, 
     // but the backend allows it. However, if they want to modify, they can.
-    
+
     const status = activeTodo.completion.status || 'incomplete';
     // If it's awaiting approval or completed, the next click sets it to incomplete
     const isCurrentlyDoneOrAwaiting = status === 'completed' || status === 'awaiting_approval';
     const newState = !isCurrentlyDoneOrAwaiting;
-    
+
     try {
       btnLmsComplete.disabled = true;
       const res = await fetch(`/api/todos/${activeTodo.id}/complete`, {
@@ -500,13 +589,13 @@ if (btnLmsClose) {
         body: JSON.stringify({ userId: currentUserId, completed: newState })
       });
       if (!res.ok) throw new Error('Failed to update status');
-      
+
       const updatedStatus = await res.json();
       activeTodo.completion.completed = updatedStatus.completed;
       activeTodo.completion.status = updatedStatus.status;
-      
+
       updateLmsButtonState();
-      renderTodos(); 
+      renderTodos();
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -515,18 +604,33 @@ if (btnLmsClose) {
   });
 }
 
-window.openLmsModal = function(todoId) {
+window.openLmsModal = function (todoId) {
   const t = userTodos.find(x => x.id === todoId);
   if (!t) return;
   activeTodo = t;
-  
-  const axisName = DIAMOND_LABELS[t.diamond][t.axis - 1].replace('\n', ' ');
+
+  let label = DIAMOND_LABELS[t.diamond][t.axis - 1];
+  const axisName = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
   lmsSubtitle.textContent = `Diamond ${t.diamond} · ${axisName}`;
   lmsTitle.textContent = t.title;
-  
+
   // Parse Markdown to HTML
   lmsContent.innerHTML = marked.parse(t.content || '');
-  
+
+  // Populate Notes
+  lmsNotesInput.value = t.completion.notes || '';
+  lmsNotesView.innerHTML = (t.completion.notes) ? marked.parse(t.completion.notes) : '<i style="color: var(--text-muted);">No notes yet. Click edit to add some!</i>';
+
+  // Reset to View Mode
+  lmsNotesView.style.display = 'block';
+  lmsNotesInput.style.display = 'none';
+  btnEditNotes.style.display = 'inline-flex';
+  btnSaveNotes.style.display = 'none';
+  btnCancelNotes.style.display = 'none';
+
+  // Reset Tab
+  tabLmsInfo.click();
+
   updateLmsButtonState();
   lmsModal.classList.add('visible');
 };
@@ -534,14 +638,15 @@ window.openLmsModal = function(todoId) {
 function updateLmsButtonState() {
   if (!activeTodo) return;
   const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
-  
+
   if (status === 'completed') {
     lmsStatus.textContent = 'Status: Completed ✓';
     lmsStatus.style.color = '#10b981';
     btnLmsComplete.textContent = 'Mark Incomplete';
     btnLmsComplete.className = 'btn btn-secondary';
   } else if (status === 'awaiting_approval') {
-    lmsStatus.textContent = 'Status: Awaiting Approval ⏳';
+    const submittedDate = activeTodo.completion.submitted_at ? new Date(activeTodo.completion.submitted_at).toLocaleDateString() : '';
+    lmsStatus.textContent = `Status: Awaiting Approval ⏳ ${submittedDate ? '(' + submittedDate + ')' : ''}`;
     lmsStatus.style.color = '#3b82f6';
     btnLmsComplete.textContent = 'Cancel Completion Request';
     btnLmsComplete.className = 'btn btn-secondary';
