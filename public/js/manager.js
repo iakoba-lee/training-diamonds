@@ -54,6 +54,20 @@ const BASE_CHART_OPTIONS = {
 
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
+  // Configure marked for GFM, line breaks, and to open links in a new tab
+  const renderer = new marked.Renderer();
+  const linkRenderer = renderer.link;
+  renderer.link = function() {
+    let html = linkRenderer.apply(this, arguments);
+    return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
+  };
+
+  marked.setOptions({
+    gfm: true,
+    breaks: true,
+    renderer: renderer
+  });
+
   checkAuth();
 });
 
