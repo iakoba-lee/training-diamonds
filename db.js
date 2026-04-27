@@ -86,6 +86,13 @@ try {
   // Column already exists
 }
 
+// Add 'content' column migration to todos
+try {
+  db.exec("ALTER TABLE todos ADD COLUMN content TEXT");
+} catch (e) {
+  // Column already exists
+}
+
 // Add 'status' column migration to user_todos
 try {
   db.exec("ALTER TABLE user_todos ADD COLUMN status TEXT NOT NULL DEFAULT 'incomplete' CHECK(status IN ('incomplete', 'awaiting_approval', 'completed'))");
@@ -100,9 +107,44 @@ try {
   // Column already exists
 }
 
+// Add 'completed_at' column migration to user_todos
+try {
+  db.exec("ALTER TABLE user_todos ADD COLUMN completed_at DATETIME");
+} catch (e) {
+  // Column already exists
+}
+
 // Add 'notes' column migration to user_todos
 try {
   db.exec("ALTER TABLE user_todos ADD COLUMN notes TEXT");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'snapshot_type' column migration to skill_snapshots
+try {
+  db.exec("ALTER TABLE skill_snapshots ADD COLUMN snapshot_type TEXT NOT NULL DEFAULT 'current' CHECK(snapshot_type IN ('current', 'aim'))");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'role' column migration to users
+try {
+  db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'team' column migration to users
+try {
+  db.exec("ALTER TABLE users ADD COLUMN team TEXT DEFAULT 'Default'");
+} catch (e) {
+  // Column already exists
+}
+
+// Add 'created_at' column migration to users
+try {
+  db.exec("ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
 } catch (e) {
   // Column already exists
 }
