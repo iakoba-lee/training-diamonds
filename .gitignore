@@ -4,3 +4,5 @@ data/skills.db-wal
 data/skills.db-shm
 .env
 .DS_Store
+gemini.md
+.agent/skills/
