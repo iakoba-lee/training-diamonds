@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -15,12 +16,13 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 
 // Session middleware (SQLite-backed)
+console.log(process.env.SESSION_SECRET);
 app.use(session({
   store: new SqliteStore({
     client: db,
     expired: { clear: true, intervalMs: 900000 } // clean expired sessions every 15 min
   }),
-  secret: process.env.SESSION_SECRET || 'diamond-portal-secret-change-me',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
