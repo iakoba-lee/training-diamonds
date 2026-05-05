@@ -9,9 +9,12 @@ services:
       - NODE_ENV=production
       - PORT=3001
     volumes:
-      - ./data:/usr/src/app/data
+      - training-diamonds-data:/usr/src/app/data
     networks:
       - web
+
+volumes:
+  training-diamonds-data:
 
 networks:
   web:
