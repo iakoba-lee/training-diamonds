@@ -1,6 +1,8 @@
 services:
   training-diamonds:
     build: .
+    env_file:
+      - .env
     container_name: training-diamonds
     restart: unless-stopped
     environment:
