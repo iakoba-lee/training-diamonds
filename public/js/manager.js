@@ -145,6 +145,7 @@ function renderTable() {
   teamTbody.innerHTML = '';
 
   teamData.forEach(user => {
+    if (user.role === 'manager') return;
     const d1Avg = calcDiamondAvg(user.diamond1.current);
     const d2Avg = calcDiamondAvg(user.diamond2.current);
     const overall = user.avgScore ? Number(user.avgScore) : null;
@@ -1037,6 +1038,7 @@ function renderTeamAverages() {
     let count = 0;
 
     teamData.forEach(u => {
+      if (u.role === 'manager') return;
       const snap = diamond === 1 ? u.diamond1.current : u.diamond2.current;
       if (snap) {
         sums[0] += snap.axis_1;

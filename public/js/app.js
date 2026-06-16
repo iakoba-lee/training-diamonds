@@ -174,9 +174,10 @@ async function loadUsers() {
 
     userSelect.innerHTML = '<option value="">— Choose a user —</option>';
     users.forEach(u => {
+      if (u.role === 'manager') return;
       const opt = document.createElement('option');
       opt.value = u.id;
-      opt.textContent = u.display_name + (u.role === 'manager' ? ' ⭐' : '');
+      opt.textContent = u.display_name;
       userSelect.appendChild(opt);
     });
 
