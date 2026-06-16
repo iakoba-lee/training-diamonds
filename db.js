@@ -188,30 +188,16 @@ if (fs.existsSync(curriculumPath)) {
     const syncCurriculum = db.transaction((todos) => {
       let added = 0;
       let updated = 0;
-      const activeIds = [];
       
       for (const item of todos) {
         const existing = checkTodo.get(item.diamond, item.axis, item.level, item.title);
         if (!existing) {
-          const res = insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
-          activeIds.push(res.lastInsertRowid);
+          insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
           added++;
         } else {
           updateTodo.run(item.content || '', existing.id);
-          activeIds.push(existing.id);
           updated++;
         }
-      }
-      
-      // Delete any todos that are no longer in the curriculum file
-      if (activeIds.length > 0) {
-        const placeholders = activeIds.map(() => '?').join(',');
-        const result = db.prepare(`DELETE FROM todos WHERE id NOT IN (${placeholders})`).run(...activeIds);
-        if (result.changes > 0) {
-          console.log(`Synced curriculum: removed ${result.changes} obsolete to-do items.`);
-        }
-      } else {
-        db.prepare('DELETE FROM todos').run();
       }
       
       console.log(`Synced curriculum: added ${added}, updated ${updated} to-do items in the database.`);
