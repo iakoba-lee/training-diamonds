@@ -1,0 +1,611 @@
+[
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 1,
+    "title": "Step 1: Set up RingCentral",
+    "content": "<p>RingCentral is a cloud-based communication platform that replaces traditional office phone systems. Many of our clients will call our RingCentral number so you will need to understand how the platform works. Our team has a shared number and each team member has an extension.</p><p>Please download RingCentral on your computer and familiarize yourself with the features. There is also a phone app you may download if you want to take phone calls while on the move.</p><p><strong>Some key features to explore:</strong></p><ul><li>Setting work hours so that you only get phone calls when you're clocked in</li><li>Changing your status (Available, Busy, Do not disturb, Invisible)</li><li>How to transfer phone calls to other coworkers</li></ul><p><em>Note: RingCentral should be pre-installed on your device. If it is not, please install it through Software Center (Windows OS) or Self Service+ (Mac OS).</em></p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 1,
+    "title": "Step 2: Configure Splashtop Business",
+    "content": "<p>Splashtop is a remote desktop application that enables tech support technicians to remotely view and control an employee's device in real-time, making it easy to troubleshoot software issues or perform system updates without needing to be physically present.</p><p>Please download and configure Splashtop Business on your computer and familiarize yourself with the features.</p><p><strong>Some key features to explore:</strong></p><ul><li>Connecting to various campus devices</li><li>Changing your Splashtop display so you can see multiple monitors if a remotely accessed device has more than one monitor</li><li>Blanking the screen of a remotely accessed device</li><li>Locking the keyboard and mouse of a remotely accessed device</li><li>Sending messages to a campus device you are remotely accessing</li></ul><p><em>Note: Splashtop Business should be pre-installed on your device. If it is not, please install it through Software Center (Windows OS) or Self Service+ (Mac OS).</em></p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 2,
+    "title": "Step 1: Read Software Center FAQ",
+    "content": "<p>Software Center (Windows) and Self Service (Mac) are the primary portals for installing managed applications. Read the official FHSS-IT troubleshooting documentation regarding missing applications.</p><p><strong>Instructions:</strong></p><p>Read the training article: <a href=\"https://support.fhss-it.byu.edu/scp/faq.php?id=14\" target=\"_blank\">FAQ #14: Software Center Apps Missing</a>.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 2,
+    "title": "Step 2: Trigger Machine Policy Evaluation",
+    "content": "<p>Manually trigger a device sync to pull down any newly assigned application packages from the management server.</p><p><strong>Instructions:</strong></p><p>Go to the Windows Control Panel, open <strong>Configuration Manager Properties</strong>, go to the <strong>Actions</strong> tab, select <strong>Machine Policy Retrieval & Evaluation Cycle</strong>, and click <strong>Run Now</strong>.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 2,
+    "title": "Step 3: Resolve Software Center App Issues in Practice",
+    "content": "<p>Put your troubleshooting knowledge to the test by resolving this sync issue in production.</p><p><strong>Instructions:</strong></p><p>Successfully resolve this error on client machines in the field at least 3 times.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 3,
+    "title": "Step 1: Add Shared Mailboxes in Outlook",
+    "content": "<p>Configure second inboxes / shared mailboxes on user workstations.</p><p><strong>Instructions:</strong></p><p>Add 5 shared inboxes to employee computers, demonstrating this task on Outlook Classic and New Outlook across both Windows and macOS platforms.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 3,
+    "title": "Step 2: Create Email Aliases",
+    "content": "<p>Set up alias addresses to route multiple emails to a single destination.</p><p><strong>Instructions:</strong></p><p>Demonstrate how to create and configure a working alias email address in our mail administration console.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 3,
+    "title": "Step 3: Troubleshoot Microsoft Outlook Profile Issues",
+    "content": "<p>Resolve common Outlook client loading, synchronization, and profile errors.</p><p><strong>Instructions:</strong></p><p>Demonstrate troubleshooting proficiency in resolving Outlook profile issues on both Windows and macOS systems.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 4,
+    "title": "Step 1: Perform File Backups via OneDrive/Box",
+    "content": "<p>Secure user documents using our cloud-backed sync folders.</p><p><strong>Instructions:</strong></p><p>Perform data backups on 5 different user devices through Box Drive or OneDrive desktop sync.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 4,
+    "title": "Step 2: Restore Backups on New Workstations",
+    "content": "<p>Ensure users' transitioned systems have their restored backups.</p><p><strong>Instructions:</strong></p><p>Download and restore backup data onto replacement hardware at least 3 times.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 4,
+    "title": "Step 3: Share Files and Manage Permissions",
+    "content": "<p>Use link permissions safely to protect sensitive department documents.</p><p><strong>Instructions:</strong></p><p>Successfully share 3 separate documents and 3 folders through Box or OneDrive, demonstrating correct configuration of read-only vs. editor privileges.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 5,
+    "title": "Step 1: Navigate Gro Portal",
+    "content": "<p>Understand our department's management portal, Gro.</p><p><strong>Instructions:</strong></p><p>Demonstrate to a student lead or manager your understanding of the Gro system and how to find training/internal documentation within it.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 5,
+    "title": "Step 2: Resolve Adobe Licensing Errors",
+    "content": "<p>Fix Creative Cloud account registration and package errors.</p><p><strong>Instructions:</strong></p><p>Independently troubleshoot and resolve 3 separate Adobe licensing issues (e.g. \"Trial Expired\" warnings or enterprise sign-in loops) for department clients.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 1,
+    "level": 5,
+    "title": "Step 3: Complete Adobe Support Trainings",
+    "content": "<p>Expand your knowledge of the Adobe Suite.</p><p><strong>Instructions:</strong></p><p>Complete all assigned Adobe troubleshooting and packaging courses in the library.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 1: Create Local User Accounts",
+    "content": "<p>Add local user profiles on workstations.</p><p><strong>Instructions:</strong></p><p>Create a local user account on a Windows workstation (via Computer Management) and a macOS workstation (via System Settings).</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 2: Manage Admin Group Membership",
+    "content": "<p>Modify user rights on local Windows computers.</p><p><strong>Instructions:</strong></p><p>Add and remove a user profile from the local Administrators group on a Windows machine.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 3: Articulate Local Administrator Access Policy",
+    "content": "<p>Understand the rules regarding least-privilege security.</p><p><strong>Instructions:</strong></p><p>Demonstrate to a lead technician your understanding of the department guidelines regarding when it is appropriate to grant local administrator access and when it should be withheld.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 4: Set Up Mac Workstations",
+    "content": "<p>Initialize macOS computers from the Out-of-Box Experience.</p><p><strong>Instructions:</strong></p><p>Complete the setup process and join the network for 5 Mac computers following the department configuration checklist.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 2,
+    "title": "Step 1: Image Workstations Independently",
+    "content": "<p>Deploy the standardized OS image across workstations.</p><p><strong>Instructions:</strong></p><p>Image 10 computers independently following the official QA checklist from start to finish.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 2,
+    "title": "Step 2: Resolve Imaging Failures",
+    "content": "<p>Troubleshoot common issues during the PXE boot or image installation phases.</p><p><strong>Instructions:</strong></p><p>Successfully diagnose and resolve 3 distinct imaging issues (e.g. TFTP boot timeouts, driver payload failures, or task sequence interruptions).</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 3,
+    "title": "Step 1: Perform Secure Drive Wiping",
+    "content": "<p>Sanitize hard drives before recycling or repurposing.</p><p><strong>Instructions:</strong></p><p>Wipe 10 Windows computers and 3 macOS computers independently using department-approved disk utilities.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 3,
+    "title": "Step 2: Understand Device Wiping Policy",
+    "content": "<p>Identify when drive sanitization is legally or logistically required.</p><p><strong>Instructions:</strong></p><p>Demonstrate a sound understanding of when a computer must be wiped (e.g. employee departures, surplus transitions, or serious malware infections).</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 4,
+    "title": "Step 1: Set Up Red Hat Enterprise Linux",
+    "content": "<p>Deploy standard Red Hat workstations.</p><p><strong>Instructions:</strong></p><p>Image 5 computers with Red Hat Enterprise Linux (RHEL) independently.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 4,
+    "title": "Step 2: Learn Core Linux Commands",
+    "content": "<p>Navigate and manage file permissions via the terminal.</p><p><strong>Instructions:</strong></p><p>Demonstrate understanding of core Linux terminal commands, including <code>ls</code>, <code>cd</code>, <code>pwd</code>, <code>chmod</code>, <code>chown</code>, and package management via <code>yum</code>/<code>dnf</code>.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 5,
+    "title": "Step 1: Create Bootable USB Media",
+    "content": "<p>Use image writing tools to create recovery or installation media.</p><p><strong>Instructions:</strong></p><p>Create a bootable Windows installation USB stick using Rufus, selecting the appropriate partition schema (GPT/MBR) for modern target machines.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 5,
+    "title": "Step 2: Partition Drive Volumes",
+    "content": "<p>Manage system partitions during OS setup.</p><p><strong>Instructions:</strong></p><p>Demonstrate ability to partition a Windows drive during the installation screen using custom layout boundaries.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 2,
+    "level": 5,
+    "title": "Step 3: Configure BIOS/UEFI Settings",
+    "content": "<p>Navigate low-level system settings on workstations.</p><p><strong>Instructions:</strong></p><p>Demonstrate a full understanding of the BIOS/UEFI menu, including configuring boot order, secure boot, and TPM settings.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 1,
+    "title": "Step 1: Study Phone Etiquette Guide",
+    "content": "<p>Learn the standard scripts and phrases used when representing the IT support department.</p><p><strong>Instructions:</strong></p><p>Review the phone etiquette introduction guide and study the \"cheat sheet of politeness\" for caller greetings and de-escalation.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 1,
+    "title": "Step 2: Handle Support Calls",
+    "content": "<p>Take calls live to practice professional phone support.</p><p><strong>Instructions:</strong></p><p>Successfully take 10 phone calls from users, providing support and documenting each interaction in the ticketing system.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 2,
+    "title": "Step 1: Learn Professional Email Formatting",
+    "content": "<p>Written communication must maintain a helpful and professional tone.</p><p><strong>Instructions:</strong></p><p>Learn the department requirements for email responses (formatting, polite openings/closings, and adding a standardized signature). Practice passing emails through spelling/grammar checkers or AI to verify tone.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 2,
+    "title": "Step 2: Manage Email Support Tickets",
+    "content": "<p>Track written user inquiries inside the ticket portal.</p><p><strong>Instructions:</strong></p><p>Create, update, and resolve 10 support tickets initiated via client emails.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 3,
+    "title": "Step 1: Perform In-Person Support Runs",
+    "content": "<p>Help clients at their desk locations with proper posture and body language.</p><p><strong>Instructions:</strong></p><p>Resolve issues for 5 clients in person, practicing clear communication and polite professionalism.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 3,
+    "title": "Step 2: Learn Department Faculty & Staff Details",
+    "content": "<p>Knowing our clients helps build trust in support.</p><p><strong>Instructions:</strong></p><p>Learn the names, faces, and roles/research fields of 5 clients you interact with in the department.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 4,
+    "title": "Step 1: Complete Pressure Management Video Training",
+    "content": "<p>Learn mental models to stay composed during high-pressure situations.</p><p><strong>Instructions:</strong></p><p>Watch the designated video regarding dealing with pressure and stress: <a href=\"#\">[Insert YouTube Link]</a>.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 4,
+    "title": "Step 2: Handle Challenging support Interactions",
+    "content": "<p>De-escalate urgent or frustrated users politely.</p><p><strong>Instructions:</strong></p><p>Demonstrate de-escalation techniques on support calls or desk-side runs, maintaining a calm demeanor under pressure.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 5,
+    "title": "Step 1: Read How to Win Friends & Influence People",
+    "content": "<p>Read Dale Carnegie's classic book on interpersonal relations.</p><p><strong>Instructions:</strong></p><p>Check out the department copy of <em>How to Win Friends and Influence People</em> and read the assigned sections on customer service and building connections.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 3,
+    "level": 5,
+    "title": "Step 2: Pass Book Quiz",
+    "content": "<p>Verify your understanding of Carnegie's principles.</p><p><strong>Instructions:</strong></p><p>Complete the department quiz testing your understanding of the book's core communication concepts.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 1,
+    "title": "Step 1: Learn Tech Room Layout",
+    "content": "<p>Review our stock locations for standard items.</p><p><strong>Instructions:</strong></p><p>Familiarize yourself with the tech room mapping layout and storage cabinet label system.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 1,
+    "title": "Step 2: Complete Tech Room Scavenger Hunt",
+    "content": "<p>Find replacement accessories and repair tools.</p><p><strong>Instructions:</strong></p><p>Complete the tech room scavenger hunt, showing you can quickly find standard adapter dongles, patch cables, spare drives, and tools.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 2,
+    "title": "Step 1: Learn Ticket Lifecycle Workflow",
+    "content": "<p>Understand ticket queues and assignment protocols.</p><p><strong>Instructions:</strong></p><p>Demonstrate understanding of how to open a ticket, assign ownership, log internal notes (visible only to IT staff), reply to users, and close tickets inside OSTicket.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 2,
+    "title": "Step 2: Manage Support Tickets",
+    "content": "<p>Use OSTicket to track active support cases.</p><p><strong>Instructions:</strong></p><p>Create, update, and close at least 10 tickets inside OSTicket.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 3,
+    "title": "Step 1: Learn Quarantine Tagging Policy",
+    "content": "<p>Identify infected or diagnostic-hold devices using standard tags.</p><p><strong>Instructions:</strong></p><p>Learn the quarantine guidelines and the standard sticky note layout (including Owner Name, Ticket ID, Date, Tech initials, and Hold Reason).</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 3,
+    "title": "Step 2: Process Devices in Quarantine",
+    "content": "<p>Move devices through the quarantine workflow safely.</p><p><strong>Instructions:</strong></p><p>Properly log and place 2 computers in quarantine, and successfully release/remove 2 computers once diagnostics are complete.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 4,
+    "title": "Step 1: Navigate Inventory Database",
+    "content": "<p>Access the inventory management console.</p><p><strong>Instructions:</strong></p><p>Learn how to query computers by hostname, user name, or serial tag inside our inventory system.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 4,
+    "title": "Step 2: Verify Asset Metadata",
+    "content": "<p>Perform audits on inventory cards.</p><p><strong>Instructions:</strong></p><p>Look up a computer and identify its exact physical location, current owner/assignee, purchase date, and warranty details.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 5,
+    "title": "Step 1: Learn Surplus Reporting Procedures",
+    "content": "<p>Prepare retired assets for surplus disposal.</p><p><strong>Instructions:</strong></p><p>Familiarize yourself with the asset surplus tracking forms, log retired assets, and organize disposal batches with the front desk.</p>"
+  },
+  {
+    "diamond": 1,
+    "axis": 4,
+    "level": 5,
+    "title": "Step 2: Complete Surplus Run",
+    "content": "<p>Deliver hardware to surplus warehouse.</p><p><strong>Instructions:</strong></p><p>Participate in at least one surplus run from packaging to physical dropoff.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 1,
+    "title": "Step 1: Practice Terminal Security",
+    "content": "<p>Secure local admin accounts and build screen locking habits.</p><p><strong>Instructions:</strong></p><p>Familiarize yourself with picking strong passphrases and saving credentials in a password manager. Build the habit of locking your workstation screen (Win+L / Cmd+Ctrl+Q) every time you leave your desk.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 1,
+    "title": "Step 2: Complete Phishing Training",
+    "content": "<p>Identify and report phishing indicators.</p><p><strong>Instructions:</strong></p><p>Complete the assigned security module on identifying phishing headers, links, and reporting suspicious emails.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 2,
+    "title": "Step 1: Navigate Falcon Console",
+    "content": "<p>Access the CrowdStrike Falcon endpoint console.</p><p><strong>Instructions:</strong></p><p>Access the Falcon console and learn to navigate endpoints, host groups, and active threat alarms.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 2,
+    "title": "Step 2: Interpret Host Security Alerts",
+    "content": "<p>Assess active alert metrics inside CrowdStrike.</p><p><strong>Instructions:</strong></p><p>Analyze a threat alert card to identify host names, threat severity levels, and detection paths.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 3,
+    "title": "Step 1: Create Objects in Active Directory",
+    "content": "<p>Administer directories in AD.</p><p><strong>Instructions:</strong></p><p>Create and configure 5 computer or user objects inside Active Directory.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 3,
+    "title": "Step 2: Lookup LAPS Administrator Passwords",
+    "content": "<p>Find local admin credentials on domain-joined devices.</p><p><strong>Instructions:</strong></p><p>Locate and retrieve LAPS passwords securely to log into local administrator accounts on client workstations.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 4,
+    "title": "Step 1: Scan for Security Vulnerabilities",
+    "content": "<p>Identify outstanding security warnings on client endpoints.</p><p><strong>Instructions:</strong></p><p>Scan host records for outdated browsers, invalid Java runtimes, or unpatched configuration vulnerabilities.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 4,
+    "title": "Step 2: Remediate Software Vulnerabilities",
+    "content": "<p>Patch endpoints to resolve security alerts.</p><p><strong>Instructions:</strong></p><p>Apply security patches, update software packages, or adjust security policies to remediate active vulnerabilities on 3 target devices.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 5,
+    "title": "Step 1: Study SOC Protocols",
+    "content": "<p>Understand escalation guidelines for security breaches.</p><p><strong>Instructions:</strong></p><p>Read the official documentation outlining how to notify the Security Operations Center (SOC) during compromised account or malware events.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 1,
+    "level": 5,
+    "title": "Step 2: Initiate SOC Incident Communication",
+    "content": "<p>Contact the Security Operations Center to report a threat.</p><p><strong>Instructions:</strong></p><p>Communicate with the SOC team at least once regarding a mock or real incident report.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 1: Support KMBL Meetings",
+    "content": "<p>Provide AV support for department seminars.</p><p><strong>Instructions:</strong></p><p>Support AV setups for at least 2 monthly training meetings on the KMBL 9th floor.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 1,
+    "title": "Step 2: Connect Presentation Podiums",
+    "content": "<p>Route presentation outputs using room touch consoles.</p><p><strong>Instructions:</strong></p><p>Demonstrate complete proficiency with the R2D2 and C3PO podium units, routing HDMI, microphones, and camera feeds.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 2,
+    "title": "Step 1: Identify AV Cable Types",
+    "content": "<p>Understand display connectors and display parameters.</p><p><strong>Instructions:</strong></p><p>Demonstrate complete understanding of HDMI, DisplayPort, and Mini-DisplayPort cables, adapters, and their appropriate use cases.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 2,
+    "title": "Step 2: Configure Zoom Audio Interfaces",
+    "content": "<p>Map external microphones and sound mixers to remote calls.</p><p><strong>Instructions:</strong></p><p>Set up a Zoom room meeting utilizing external audio interfaces and mixers, and verify the audio capture by recording a test call.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 3,
+    "title": "Step 1: Set Up Purple Box Equipment",
+    "content": "<p>Deploy portable mixers and speakers from the AV kits.</p><p><strong>Instructions:</strong></p><p>Assemble and connect portable AV gear (mixers, wireless mics, speakers) from the department Purple Box kits.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 3,
+    "title": "Step 2: Support Purple Box Events",
+    "content": "<p>Provide live audio/visual support during department activities.</p><p><strong>Instructions:</strong></p><p>Assist senior technicians on-site for 5 separate Purple Box events.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 4,
+    "title": "Step 1: Plan Purple Box Event Logistics",
+    "content": "<p>Co-ordinate gear checkouts and timetables for events.</p><p><strong>Instructions:</strong></p><p>Assess event rooms, draft equipment checklists, and plan the setup/teardown timeline for AV kits.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 4,
+    "title": "Step 2: Lead Purple Box AV Support",
+    "content": "<p>Act as the lead technician for live event AV.</p><p><strong>Instructions:</strong></p><p>Manage and lead the setup, operation, and teardown of AV equipment for 2 Purple Box events independently.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 5,
+    "title": "Step 1: Configure Rødecaster Audio Board",
+    "content": "<p>Manage physical and digital inputs on our recording mixer.</p><p><strong>Instructions:</strong></p><p>Configure gain, EQ presets, and sliders on the Rødecaster Pro board.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 2,
+    "level": 5,
+    "title": "Step 2: Create Audio Scenes",
+    "content": "<p>Create and save presets for recordings.</p><p><strong>Instructions:</strong></p><p>Build and save custom audio scenes mapping host microphones, Bluetooth feeds, and sound pads for recording sessions.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 1,
+    "title": "Step 1: Articulate WiFi vs Ethernet Differences",
+    "content": "<p>Explain network bandwidth and reliability differences.</p><p><strong>Instructions:</strong></p><p>Clearly explain the difference between campus Eduroam (WiFi) and physical Ethernet to a non-technical faculty member.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 1,
+    "title": "Step 2: Connect to Campus WiFi",
+    "content": "<p>Enroll client devices into BYU Eduroam.</p><p><strong>Instructions:</strong></p><p>Configure client WiFi connections, install the necessary certificates, and log in to eduroam successfully.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 1,
+    "title": "Step 3: Resolve Ethernet Connectivity Issues",
+    "content": "<p>Diagnose layers 1/2 connection errors on local machines.</p><p><strong>Instructions:</strong></p><p>Successfully diagnose and resolve 3 separate physical Ethernet jack or cable connection issues.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 2,
+    "title": "Step 1: Request Network Port Activations",
+    "content": "<p>Activate dormant wall connections via support requests.</p><p><strong>Instructions:</strong></p><p>Identify the port numbers on office wall plates and submit 3 requests to reactivate dormant network ports to BYU OIT.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 2,
+    "title": "Step 2: Connect Wired Office Printers",
+    "content": "<p>Connect printers to the network and map them locally.</p><p><strong>Instructions:</strong></p><p>Set up a wired network printer on the office floor, assigning it a static port, and print a test page successfully from a client computer.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 3,
+    "title": "Step 1: Install GlobalProtect VPN Client",
+    "content": "<p>Configure remote access on client machines.</p><p><strong>Instructions:</strong></p><p>Download and install Palo Alto GlobalProtect on 2 Windows and 2 macOS workstations.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 3,
+    "title": "Step 2: Connect and Test Secure Routing",
+    "content": "<p>Verify VPN tunnels and secure network routing.</p><p><strong>Instructions:</strong></p><p>Verify client access to BYU internal servers while connected. Practice disconnecting and resolving a routing conflict on a client machine.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 4,
+    "title": "Step 1: Connect Printers via IP",
+    "content": "<p>Add print queues directly using raw IP protocols.</p><p><strong>Instructions:</strong></p><p>Connect 3 macOS workstations to department printers using direct IP printing (LPD/LPR protocol).</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 4,
+    "title": "Step 2: Troubleshoot Windows Printer Spooler",
+    "content": "<p>Resolve printing queues and driver issues on Windows.</p><p><strong>Instructions:</strong></p><p>Resolve printer queue conflicts and update network printer drivers on 3 separate Windows computers.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 5,
+    "title": "Step 1: Diagnose Trust Relationship Errors",
+    "content": "<p>Identify active directory secure channel errors.</p><p><strong>Instructions:</strong></p><p>Recognize the \"trust relationship failed\" warning during workstation logins.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 3,
+    "level": 5,
+    "title": "Step 2: Re-join Workstations to Domain",
+    "content": "<p>Re-establish secure channels between AD and workstations.</p><p><strong>Instructions:</strong></p><p>Reconnect 3 workstations to the domain by resetting their computer objects in AD and running re-join scripts.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 1,
+    "title": "Step 1: Study Kanban Workflows",
+    "content": "<p>Learn how the support department organizes work tasks.</p><p><strong>Instructions:</strong></p><p>Walk through the department Kanban board with a student lead to understand swimlanes (To Do, In Progress, Review, Done) and card definitions.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 1,
+    "title": "Step 2: Complete Board Task Card",
+    "content": "<p>Interact with the card checklists.</p><p><strong>Instructions:</strong></p><p>Claim a card, mark a task checklist item as done, and move it through the visual board.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 2,
+    "title": "Step 1: Claim Backlog Project Card",
+    "content": "<p>Choose an item from the pending department backlog.</p><p><strong>Instructions:</strong></p><p>Take personal responsibility for an outstanding project task card on the backlog board.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 2,
+    "title": "Step 2: Coordinate and Deliver Project Task",
+    "content": "<p>Perform execution and log completion updates.</p><p><strong>Instructions:</strong></p><p>Coordinate tasks with team members, perform necessary work, and complete the project in a timely manner.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 3,
+    "title": "Step 1: Identify Department Support Bottlenecks",
+    "content": "<p>Observe friction points in the tech support queue.</p><p><strong>Instructions:</strong></p><p>Find an operational issue or bottleneck in the department that can be solved with a planned project.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 3,
+    "title": "Step 2: Propose and Set Up Project Card",
+    "content": "<p>Setup a project plan and submit for approval.</p><p><strong>Instructions:</strong></p><p>Draft the card details (goals, steps, team roles), secure approval from a manager, and create the card on the Kanban board.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 4,
+    "title": "Step 1: Lead Team Support Project",
+    "content": "<p>Act as the project manager for a department project.</p><p><strong>Instructions:</strong></p><p>Manage and lead a team project all the way from inception, planning, and execution to completion.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 5,
+    "title": "Step 1: Read Agile/Scrum Literature",
+    "content": "<p>Read a core text on Scrum or Agile team workflows.</p><p><strong>Instructions:</strong></p><p>Read the assigned book on Scrum or project management frameworks.</p>"
+  },
+  {
+    "diamond": 2,
+    "axis": 4,
+    "level": 5,
+    "title": "Step 2: Submit Reflection Summary",
+    "content": "<p>Write and submit a report on your readings.</p><p><strong>Instructions:</strong></p><p>Write a one-page summary on what you learned and how Agile concepts can be applied to tech support workflows, then submit it to Jason.</p>"
+  }
+]

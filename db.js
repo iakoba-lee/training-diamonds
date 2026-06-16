@@ -166,6 +166,64 @@ if (!teamPw) {
   console.log('⚠️  Default team password set to "team" — change this in Settings!');
 }
 
+// Seed curriculum from data/curriculum.json if it exists
+const curriculumPath = path.join(dataDir, 'curriculum.json');
+if (fs.existsSync(curriculumPath)) {
+  try {
+    const curriculumData = JSON.parse(fs.readFileSync(curriculumPath, 'utf8'));
+    
+    const checkTodo = db.prepare(`
+      SELECT id FROM todos WHERE diamond = ? AND axis = ? AND level = ? AND title = ?
+    `);
+    
+    const insertTodo = db.prepare(`
+      INSERT INTO todos (diamond, axis, level, title, content)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    
+    const updateTodo = db.prepare(`
+      UPDATE todos SET content = ? WHERE id = ?
+    `);
+
+    const syncCurriculum = db.transaction((todos) => {
+      let added = 0;
+      let updated = 0;
+      const activeIds = [];
+      
+      for (const item of todos) {
+        const existing = checkTodo.get(item.diamond, item.axis, item.level, item.title);
+        if (!existing) {
+          const res = insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
+          activeIds.push(res.lastInsertRowid);
+          added++;
+        } else {
+          updateTodo.run(item.content || '', existing.id);
+          activeIds.push(existing.id);
+          updated++;
+        }
+      }
+      
+      // Delete any todos that are no longer in the curriculum file
+      if (activeIds.length > 0) {
+        const placeholders = activeIds.map(() => '?').join(',');
+        const result = db.prepare(`DELETE FROM todos WHERE id NOT IN (${placeholders})`).run(...activeIds);
+        if (result.changes > 0) {
+          console.log(`Synced curriculum: removed ${result.changes} obsolete to-do items.`);
+        }
+      } else {
+        db.prepare('DELETE FROM todos').run();
+      }
+      
+      console.log(`Synced curriculum: added ${added}, updated ${updated} to-do items in the database.`);
+    });
+
+    syncCurriculum(curriculumData);
+  } catch (err) {
+    console.error('Error seeding curriculum.json:', err);
+  }
+}
+
+
 // Seed a default manager user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
@@ -176,3 +234,5 @@ if (userCount.count === 0) {
 }
 
 module.exports = db;
+
+

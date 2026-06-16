@@ -3,4 +3,6 @@ node_modules/
 .DS_Store
 gemini.md
 .agent/skills/
-data
+data/*.db
+data/*.db-shm
+data/*.db-wal
