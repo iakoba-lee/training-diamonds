@@ -166,8 +166,8 @@ if (!teamPw) {
   console.log('⚠️  Default team password set to "team" — change this in Settings!');
 }
 
-// Seed curriculum from data/curriculum.json if it exists
-const curriculumPath = path.join(dataDir, 'curriculum.json');
+// Seed curriculum from curriculum.json if it exists
+const curriculumPath = path.join(__dirname, 'curriculum.json');
 if (fs.existsSync(curriculumPath)) {
   try {
     const curriculumData = JSON.parse(fs.readFileSync(curriculumPath, 'utf8'));
