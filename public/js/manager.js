@@ -1025,14 +1025,9 @@ window.saveProgressReview = async function (userId) {
 
 // --- Team Averages ---
 function renderTeamAverages() {
-  const usersWithData = teamData.filter(u => u.diamond1.current || u.diamond2.current);
-
-  if (usersWithData.length === 0) {
-    teamAverages.style.display = 'none';
-    return;
+  if (teamAverages) {
+    teamAverages.style.display = '';
   }
-
-  teamAverages.style.display = '';
 
   [1, 2].forEach(diamond => {
     const canvasId = diamond === 1 ? 'chart-team-d1' : 'chart-team-d2';
@@ -1041,7 +1036,7 @@ function renderTeamAverages() {
     const sums = [0, 0, 0, 0];
     let count = 0;
 
-    usersWithData.forEach(u => {
+    teamData.forEach(u => {
       const snap = diamond === 1 ? u.diamond1.current : u.diamond2.current;
       if (snap) {
         sums[0] += snap.axis_1;
