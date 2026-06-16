@@ -289,4 +289,58 @@ router.post('/approvals', requireManager, (req, res) => {
   }
 });
 
+// POST /api/todos/bulk - Manager only
+router.post('/bulk', requireManager, (req, res) => {
+  const { todos } = req.body;
+
+  if (!Array.isArray(todos) || todos.length === 0) {
+    return res.status(400).json({ error: 'todos array is required and must not be empty' });
+  }
+
+  // Validate each item
+  for (let i = 0; i < todos.length; i++) {
+    const item = todos[i];
+    if (!item.diamond || !item.axis || !item.level || !item.title) {
+      return res.status(400).json({ error: `Item at index ${i} is missing required fields (diamond, axis, level, title)` });
+    }
+  }
+
+  try {
+    const checkTodo = db.prepare(`
+      SELECT id FROM todos WHERE diamond = ? AND axis = ? AND level = ? AND title = ?
+    `);
+    
+    const insertTodo = db.prepare(`
+      INSERT INTO todos (diamond, axis, level, title, content)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    
+    const updateTodo = db.prepare(`
+      UPDATE todos SET content = ? WHERE id = ?
+    `);
+
+    const syncCurriculum = db.transaction((items) => {
+      let added = 0;
+      let updated = 0;
+      for (const item of items) {
+        const existing = checkTodo.get(item.diamond, item.axis, item.level, item.title);
+        if (!existing) {
+          insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
+          added++;
+        } else {
+          updateTodo.run(item.content || '', existing.id);
+          updated++;
+        }
+      }
+      return { added, updated };
+    });
+
+    const stats = syncCurriculum(todos);
+    res.json({ success: true, ...stats });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

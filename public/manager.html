@@ -170,6 +170,21 @@
             <button class="btn btn-secondary btn-sm hidden" id="btn-cancel-todo-edit">Cancel</button>
           </div>
         </div>
+        
+        <!-- Bulk Import Section -->
+        <div class="todo-add-form" style="border-top: 1px solid var(--border-subtle); padding-top: 20px; margin-top: 20px;">
+          <h3>Bulk Import Tasks</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px; line-height: 1.4;">
+            Upload a CSV file containing curriculum tasks. The CSV must have headers: 
+            <code>diamond</code>, <code>axis</code>, <code>level</code>, <code>title</code>, and <code>content</code>.
+          </p>
+          <div class="form-group">
+            <input type="file" id="todo-csv-file" accept=".csv" style="display: block; width: 100%; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 6px; background: rgba(0,0,0,0.1); color: var(--text-primary);">
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" id="btn-import-csv">Upload and Sync</button>
+          </div>
+        </div>
       </div>
     </div>
 

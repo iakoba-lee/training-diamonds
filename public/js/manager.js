@@ -1388,10 +1388,144 @@ function setupTodoManager() {
     btnAddTodo.addEventListener('click', addTodo);
     btnCancelTodoEdit.addEventListener('click', cancelTodoEdit);
 
+    const btnImportCSV = document.getElementById('btn-import-csv');
+    if (btnImportCSV) {
+      btnImportCSV.addEventListener('click', handleCSVImport);
+    }
+
     updateAxisLabels();
     loadManagerTodos();
   }
 }
+
+function parseCSV(text) {
+  const lines = [];
+  let row = [""];
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        row[row.length - 1] += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',') {
+      if (inQuotes) {
+        row[row.length - 1] += char;
+      } else {
+        row.push("");
+      }
+    } else if (char === '\r' || char === '\n') {
+      if (inQuotes) {
+        row[row.length - 1] += char;
+      } else {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        lines.push(row);
+        row = [""];
+      }
+    } else {
+      row[row.length - 1] += char;
+    }
+  }
+  if (row.length > 1 || row[0] !== "") {
+    lines.push(row);
+  }
+  return lines;
+}
+
+async function handleCSVImport() {
+  const fileInput = document.getElementById('todo-csv-file');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select a CSV file first.', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async function (e) {
+    try {
+      const text = e.target.result;
+      const rows = parseCSV(text);
+      
+      if (rows.length < 2) {
+        throw new Error('CSV file is empty or missing data.');
+      }
+
+      // Headers validation
+      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const colDiamond = headers.indexOf('diamond');
+      const colAxis = headers.indexOf('axis');
+      const colLevel = headers.indexOf('level');
+      const colTitle = headers.indexOf('title');
+      const colContent = headers.indexOf('content');
+
+      if (colDiamond === -1 || colAxis === -1 || colLevel === -1 || colTitle === -1) {
+        throw new Error("Missing required CSV headers. Must include 'diamond', 'axis', 'level', and 'title'.");
+      }
+
+      const todos = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 4 || (row.length === 1 && row[0] === '')) continue; // skip empty rows
+
+        const diamondVal = parseInt(row[colDiamond], 10);
+        const axisVal = parseInt(row[colAxis], 10);
+        const levelVal = parseInt(row[colLevel], 10);
+        const titleVal = row[colTitle] ? row[colTitle].trim() : '';
+        const contentVal = colContent !== -1 && row[colContent] ? row[colContent].trim() : '';
+
+        if (isNaN(diamondVal) || isNaN(axisVal) || isNaN(levelVal) || !titleVal) {
+          console.warn(`Skipping invalid row ${i + 1}:`, row);
+          continue;
+        }
+
+        todos.push({
+          diamond: diamondVal,
+          axis: axisVal,
+          level: levelVal,
+          title: titleVal,
+          content: contentVal
+        });
+      }
+
+      if (todos.length === 0) {
+        throw new Error('No valid rows found in the CSV file.');
+      }
+
+      // Send bulk upload
+      const res = await fetch('/api/todos/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ todos })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error during upload');
+      }
+
+      const result = await res.json();
+      showToast(`Imported successfully! Added ${result.added}, updated ${result.updated} tasks.`, 'success');
+      
+      // Clear input and reload tasks list
+      fileInput.value = '';
+      loadManagerTodos();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  reader.readAsText(file);
+}
+
 
 // --- Pending Approvals ---
 async function loadPendingApprovals() {
