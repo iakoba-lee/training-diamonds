@@ -166,46 +166,35 @@ if (!teamPw) {
   console.log('⚠️  Default team password set to "team" — change this in Settings!');
 }
 
-// Seed curriculum from curriculum.json if it exists
-const curriculumPath = path.join(__dirname, 'curriculum.json');
-if (fs.existsSync(curriculumPath)) {
+// Seed curriculum on fresh database setup (Initial Seed Mode)
+const todoCount = db.prepare('SELECT COUNT(*) as count FROM todos').get();
+if (todoCount.count === 0) {
   try {
-    const curriculumData = JSON.parse(fs.readFileSync(curriculumPath, 'utf8'));
+    const files = fs.readdirSync(__dirname);
+    const curriculumFile = files.find(f => f.startsWith('curriculum') && f.endsWith('.json'));
     
-    const checkTodo = db.prepare(`
-      SELECT id FROM todos WHERE diamond = ? AND axis = ? AND level = ? AND title = ?
-    `);
-    
-    const insertTodo = db.prepare(`
-      INSERT INTO todos (diamond, axis, level, title, content)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    
-    const updateTodo = db.prepare(`
-      UPDATE todos SET content = ? WHERE id = ?
-    `);
-
-    const syncCurriculum = db.transaction((todos) => {
-      let added = 0;
-      let updated = 0;
+    if (curriculumFile) {
+      const curriculumPath = path.join(__dirname, curriculumFile);
+      const curriculumData = JSON.parse(fs.readFileSync(curriculumPath, 'utf8'));
       
-      for (const item of todos) {
-        const existing = checkTodo.get(item.diamond, item.axis, item.level, item.title);
-        if (!existing) {
+      const insertTodo = db.prepare(`
+        INSERT INTO todos (diamond, axis, level, title, content)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const seedCurriculum = db.transaction((todos) => {
+        let added = 0;
+        for (const item of todos) {
           insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
           added++;
-        } else {
-          updateTodo.run(item.content || '', existing.id);
-          updated++;
         }
-      }
-      
-      console.log(`Synced curriculum: added ${added}, updated ${updated} to-do items in the database.`);
-    });
+        console.log(`Initialized database: seeded ${added} to-do items from ${curriculumFile}.`);
+      });
 
-    syncCurriculum(curriculumData);
+      seedCurriculum(curriculumData);
+    }
   } catch (err) {
-    console.error('Error seeding curriculum.json:', err);
+    console.error('Error seeding curriculum:', err);
   }
 }
 
