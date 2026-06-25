@@ -183,17 +183,71 @@
           <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px; line-height: 1.4;">
             Upload a CSV file to bulk add or update checklist tasks. The CSV file must contain the following columns:
           </p>
-          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; background: rgba(255,255,255,0.03); padding: 12px 16px; border-radius: 6px; border: 1px solid var(--border-subtle); line-height: 1.5;">
-            <strong style="color: var(--text-primary); display: block; margin-bottom: 6px;">CSV Header Format:</strong>
-            <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px;">
-              <li><code>diamond</code> — <code>1</code> (Diamond 1) or <code>2</code> (Diamond 2)</li>
-              <li><code>axis</code> — Goal index <code>1</code> to <code>4</code> (e.g., Diamond 1: 1=Apps, 2=OSs, 3=Customer Service, 4=Operations)</li>
-              <li><code>level</code> — Goal level <code>1</code> to <code>5</code></li>
-              <li><code>title</code> — The checklist item text (e.g., <code>Step 1: Set up RingCentral</code>)</li>
-              <li><code>content</code> — Detailed instructions, links, or criteria (optional, supports HTML/Markdown)</li>
-            </ul>
-            <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">
-              <em>Tip: If a task with the exact same diamond, axis, level, and title already exists, its content will be updated. Otherwise, a new task is created.</em>
+          <div class="csv-format-guide">
+            <strong class="csv-format-guide-title">CSV format example</strong>
+            <p class="csv-format-guide-desc">
+              Your file must include these column headers. Use the values below as a guide.
+            </p>
+            <div class="csv-example-table-wrap">
+              <table class="csv-example-table">
+                <thead>
+                  <tr>
+                    <th>diamond</th>
+                    <th>axis</th>
+                    <th>level</th>
+                    <th>title</th>
+                    <th>content</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>1</code></td>
+                    <td><code>1</code></td>
+                    <td><code>1</code></td>
+                    <td>Step 1: Set up RingCentral</td>
+                    <td>Complete the setup guide and verify call routing.</td>
+                  </tr>
+                  <tr>
+                    <td><code>1</code></td>
+                    <td><code>2</code></td>
+                    <td><code>2</code></td>
+                    <td>Configure macOS updates</td>
+                    <td>Enable automatic updates in System Settings.</td>
+                  </tr>
+                  <tr>
+                    <td><code>2</code></td>
+                    <td><code>3</code></td>
+                    <td><code>1</code></td>
+                    <td>Network troubleshooting basics</td>
+                    <td>Review VLAN documentation and common fixes.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <dl class="csv-format-legend">
+              <div>
+                <dt><code>diamond</code></dt>
+                <dd><code>1</code> = Diamond 1, <code>2</code> = Diamond 2</dd>
+              </div>
+              <div>
+                <dt><code>axis</code></dt>
+                <dd>Goal index <code>1</code>–<code>4</code> (Diamond 1: Apps, OSs, Customer Service, Operations)</dd>
+              </div>
+              <div>
+                <dt><code>level</code></dt>
+                <dd>Goal level <code>1</code>–<code>5</code></dd>
+              </div>
+              <div>
+                <dt><code>title</code></dt>
+                <dd>Checklist item text (required)</dd>
+              </div>
+              <div>
+                <dt><code>content</code></dt>
+                <dd>Instructions or links (optional, supports Markdown)</dd>
+              </div>
+            </dl>
+            <p class="csv-format-tip">
+              If a task with the same diamond, axis, level, and title already exists, its content is updated. Otherwise, a new task is created.
             </p>
           </div>
           <div class="form-group">

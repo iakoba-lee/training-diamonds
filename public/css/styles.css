@@ -365,6 +365,109 @@ textarea {
   color: var(--text-primary);
 }
 
+.csv-format-guide {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.csv-format-guide-title {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.csv-format-guide-desc {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.csv-example-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.csv-example-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.csv-example-table th,
+.csv-example-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.csv-example-table th {
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.csv-example-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.csv-example-table td {
+  color: var(--text-secondary);
+}
+
+.csv-example-table td:nth-child(4),
+.csv-example-table td:nth-child(5) {
+  min-width: 180px;
+}
+
+.csv-example-table code {
+  font-size: 0.85em;
+}
+
+.csv-format-legend {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.csv-format-legend > div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.csv-format-legend dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.csv-format-legend dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.csv-format-tip {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* --- Cards --- */
 .card {
   background: var(--bg-secondary);
