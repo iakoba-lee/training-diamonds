@@ -1713,15 +1713,16 @@ function updateSliderFill(slider) {
 // --- Helpers ---
 function calcDiamondAvg(snap) {
   if (!snap) return null;
-  return +((snap.axis_1 + snap.axis_2 + snap.axis_3 + snap.axis_4) / 4).toFixed(1);
+  return +((snap.axis_1 + snap.axis_2 + snap.axis_3 + snap.axis_4) / 4).toFixed(2);
 }
 
 function scoreBadge(val) {
   if (val === null || val === undefined) return '<span style="color: var(--text-muted);">—</span>';
+  const num = Number(val);
   let cls = 'score-low';
-  if (val >= 3) cls = 'score-mid';
-  if (val >= 4) cls = 'score-high';
-  return `<span class="score-badge ${cls}">${val}</span>`;
+  if (num >= 3) cls = 'score-mid';
+  if (num >= 4) cls = 'score-high';
+  return `<span class="score-badge ${cls}">${num.toFixed(2)}</span>`;
 }
 
 function formatDate(dateStr) {

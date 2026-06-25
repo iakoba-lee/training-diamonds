@@ -738,8 +738,9 @@ input[type="range"].slider-current {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
+  min-width: 48px;
   height: 28px;
+  padding: 0 4px;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 700;

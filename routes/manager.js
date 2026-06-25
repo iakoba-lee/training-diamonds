@@ -29,7 +29,7 @@ router.get('/team-overview', (req, res) => {
     if (d1Current) scores.push(d1Current.axis_1, d1Current.axis_2, d1Current.axis_3, d1Current.axis_4);
     if (d2Current) scores.push(d2Current.axis_1, d2Current.axis_2, d2Current.axis_3, d2Current.axis_4);
     if (scores.length > 0) {
-      avgScore = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+      avgScore = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
     }
 
     // Last updated timestamp
