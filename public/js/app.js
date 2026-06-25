@@ -395,19 +395,16 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
       if (levels[lvl]) levels[lvl].push(t);
     });
 
-    // Check locked state for each level
-    let previousLevelIncomplete = false;
+    // Render levels without locking constraints
     for (let l = 1; l <= 5; l++) {
       if (levels[l].length === 0) continue;
 
       const levelTodos = levels[l];
-      const isLevelComplete = levelTodos.every(t => t.completion.completed);
-      const isLocked = previousLevelIncomplete;
 
       html += `
-          <div class="level-group" style="margin: 8px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 12px;">
-            <h5 style="font-size: 0.85rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-              Level ${l} ${isLocked ? '<span style="font-size: 0.75rem;">(Locked)</span>' : ''}
+          <div class="level-group" style="margin: 8px; border-left: 2px solid var(--accent-blue); padding-left: 12px;">
+            <h5 style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+              Level ${l}
             </h5>
       `;
 
@@ -429,30 +426,16 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
           textStyle = 'text-decoration: line-through; color: var(--text-muted);';
         }
 
-        if (isLocked) {
-          return `
-            <div class="todo-item-row locked" style="padding: 8px 12px; display: flex; align-items: center; gap: 12px; opacity: 0.5; cursor: not-allowed; border-bottom: 1px solid rgba(255,255,255,0.02);">
-              ${icon}
-              <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">${escapeHtml(t.title)}</span>
-              ${extraText}
-            </div>
-          `;
-        } else {
-          return `
-            <div class="todo-item-row" onclick="openLmsModal(${t.id})" style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
-              ${icon}
-              <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
-              ${extraText}
-            </div>
-          `;
-        }
+        return `
+          <div class="todo-item-row" onclick="openLmsModal(${t.id})" style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+            ${icon}
+            <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
+            ${extraText}
+          </div>
+        `;
       }).join('');
 
       html += `</div>`; // Close level-group
-
-      if (!isLevelComplete) {
-        previousLevelIncomplete = true;
-      }
     }
 
     html += `

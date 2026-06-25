@@ -602,18 +602,16 @@ function renderDiamondTodosExpand(diamond, userId) {
       if (levels[lvl]) levels[lvl].push(t);
     });
 
-    let previousLevelIncomplete = false;
+    // Render levels without locking constraints
     for (let l = 1; l <= 5; l++) {
       if (levels[l].length === 0) continue;
 
       const levelTodos = levels[l];
-      const isLevelComplete = levelTodos.every(t => t.completion.completed);
-      const isLocked = previousLevelIncomplete;
 
       html += `
-          <div class="level-group" style="margin: 10px; border-left: 2px solid ${isLocked ? 'var(--border-subtle)' : 'var(--accent-blue)'}; padding-left: 14px;">
-            <h5 style="font-size: 0.8rem; color: ${isLocked ? 'var(--text-muted)' : 'var(--text-primary)'}; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
-              Level ${l} ${isLocked ? '<span style="font-size: 0.7rem; opacity: 0.7;">(Locked)</span>' : ''}
+          <div class="level-group" style="margin: 10px; border-left: 2px solid var(--accent-blue); padding-left: 14px;">
+            <h5 style="font-size: 0.8rem; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
+              Level ${l}
             </h5>
       `;
 
@@ -640,9 +638,9 @@ function renderDiamondTodosExpand(diamond, userId) {
         const action = status === 'completed' ? 'deny' : 'approve';
 
         return `
-          <div class="todo-item-row ${isLocked ? 'locked' : ''}" onclick="openManagerLmsModal(${t.id})" 
-               style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,0.03); border-radius: 4px; ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            <span class="status-icon-tap" onclick="event.stopPropagation(); if(!${isLocked}) handleQuickApproval(${userId}, ${t.id}, '${action}')" 
+          <div class="todo-item-row" onclick="openManagerLmsModal(${t.id})" 
+               style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,0.03); border-radius: 4px;">
+            <span class="status-icon-tap" onclick="event.stopPropagation(); handleQuickApproval(${userId}, ${t.id}, '${action}')" 
                   style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: background 0.2s;">
               ${icon}
             </span>
@@ -653,7 +651,6 @@ function renderDiamondTodosExpand(diamond, userId) {
       }).join('');
 
       html += `</div>`;
-      if (!isLevelComplete) previousLevelIncomplete = true;
     }
 
     html += `
