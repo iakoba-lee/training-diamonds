@@ -16,6 +16,15 @@ let openAxes = {}; // Track which diamond-axis dropdowns are open
 let teamChartD1 = null;
 let teamChartD2 = null;
 
+/** SQLite CURRENT_TIMESTAMP is UTC; bare "YYYY-MM-DD HH:MM:SS" must be parsed as UTC. */
+function parseDbDateTime(value) {
+  if (!value) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (/[zZ]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  return new Date(s.replace(' ', 'T') + 'Z');
+}
+
 // --- DOM Refs ---
 const userSelect = document.getElementById('user-select');
 const emptyState = document.getElementById('empty-state');
@@ -419,7 +428,7 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
 
         if (isAwaiting) {
           icon = '<span style="color: var(--accent-blue); font-weight: bold;">⏳</span>';
-          const submittedDate = t.completion.submitted_at ? new Date(t.completion.submitted_at).toLocaleDateString() : '';
+          const submittedDate = t.completion.submitted_at ? parseDbDateTime(t.completion.submitted_at).toLocaleDateString() : '';
           extraText = `<span style="font-size: 0.75rem; color: var(--accent-blue); padding-left: 8px;">(Awaiting Approval${submittedDate ? ' · ' + submittedDate : ''})</span>`;
         } else if (isDone) {
           icon = '<span style="color: var(--accent-green); font-weight: bold;">✓</span>';
@@ -637,7 +646,7 @@ function updateLmsButtonState() {
     btnLmsComplete.textContent = 'Mark Incomplete';
     btnLmsComplete.className = 'btn btn-secondary';
   } else if (status === 'awaiting_approval') {
-    const submittedDate = activeTodo.completion.submitted_at ? new Date(activeTodo.completion.submitted_at).toLocaleDateString() : '';
+    const submittedDate = activeTodo.completion.submitted_at ? parseDbDateTime(activeTodo.completion.submitted_at).toLocaleDateString() : '';
     lmsStatus.textContent = `Status: Awaiting Approval ⏳ ${submittedDate ? '(' + submittedDate + ')' : ''}`;
     lmsStatus.style.color = '#3b82f6';
     btnLmsComplete.textContent = 'Cancel Completion Request';

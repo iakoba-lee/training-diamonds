@@ -12,15 +12,16 @@ const DIAMOND_AXES = {
 // GET /api/skills/averages — get team-wide averages
 router.get('/averages', (req, res) => {
   const getLatestForEachUser = db.prepare(`
-    SELECT user_id, diamond, axis_1, axis_2, axis_3, axis_4
+    SELECT s1.user_id, s1.diamond, s1.axis_1, s1.axis_2, s1.axis_3, s1.axis_4
     FROM skill_snapshots s1
-    WHERE snapshot_type = 'current'
-    AND recorded_at = (
-      SELECT MAX(recorded_at)
-      FROM skill_snapshots s2
+    WHERE s1.snapshot_type = 'current'
+    AND s1.id = (
+      SELECT s2.id FROM skill_snapshots s2
       WHERE s2.user_id = s1.user_id
       AND s2.diamond = s1.diamond
       AND s2.snapshot_type = 'current'
+      ORDER BY s2.recorded_at DESC, s2.id DESC
+      LIMIT 1
     )
   `).all();
 
@@ -64,7 +65,7 @@ router.get('/:userId/latest', (req, res) => {
   const getLatest = db.prepare(`
     SELECT * FROM skill_snapshots
     WHERE user_id = ? AND diamond = ? AND snapshot_type = ?
-    ORDER BY recorded_at DESC
+    ORDER BY recorded_at DESC, id DESC
     LIMIT 1
   `);
 

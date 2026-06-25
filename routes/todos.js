@@ -235,7 +235,7 @@ router.post('/:id/notes', (req, res) => {
 router.get('/pending-approvals', requireManager, (req, res) => {
   try {
     const pending = db.prepare(`
-      SELECT ut.user_id, ut.todo_id, ut.completed_at, ut.submitted_at, ut.notes, u.display_name, u.team, t.title, t.diamond, t.axis, t.level
+      SELECT ut.user_id, ut.todo_id, ut.completed_at, ut.submitted_at, ut.notes, u.display_name, u.team, t.title, t.diamond, t.axis, t.level, t.content
       FROM user_todos ut
       JOIN users u ON ut.user_id = u.id
       JOIN todos t ON ut.todo_id = t.id

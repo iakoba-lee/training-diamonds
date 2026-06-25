@@ -13,7 +13,7 @@ router.get('/team-overview', (req, res) => {
   const getLatest = db.prepare(`
     SELECT * FROM skill_snapshots
     WHERE user_id = ? AND diamond = ? AND snapshot_type = ?
-    ORDER BY recorded_at DESC
+    ORDER BY recorded_at DESC, id DESC
     LIMIT 1
   `);
 
@@ -36,7 +36,7 @@ router.get('/team-overview', (req, res) => {
     const lastUpdate = db.prepare(`
       SELECT recorded_at FROM skill_snapshots
       WHERE user_id = ?
-      ORDER BY recorded_at DESC
+      ORDER BY recorded_at DESC, id DESC
       LIMIT 1
     `).get(user.id);
 

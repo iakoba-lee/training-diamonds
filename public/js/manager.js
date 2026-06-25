@@ -14,8 +14,20 @@ let currentRole = null;
 let editingUserId = null; // null = adding, number = editing
 let activeUserTodos = [];
 let activeTodo = null;
+let lmsModalUserId = null;
+let allPendingApprovalsData = [];
+let pendingApprovalMemberFilter = '';
 let openAxes = {};
 let editingReviewId = null; // null = adding, number = editing
+
+/** SQLite CURRENT_TIMESTAMP is UTC; bare "YYYY-MM-DD HH:MM:SS" must be parsed as UTC. */
+function parseDbDateTime(value) {
+  if (!value) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (/[zZ]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  return new Date(s.replace(' ', 'T') + 'Z');
+}
 
 // --- DOM Refs ---
 const teamTbody = document.getElementById('team-tbody');
@@ -109,6 +121,7 @@ function initManagerView() {
     if (pendingSection) pendingSection.classList.remove('hidden');
     setupSettings();
     setupTodoManager();
+    setupPendingApprovalsFilter();
     loadPendingApprovals();
   } else {
     // This should be handled by server redirect, but as a backup:
@@ -626,12 +639,12 @@ function renderDiamondTodosExpand(diamond, userId) {
 
         if (isAwaiting) {
           icon = '<span style="color: var(--accent-blue); font-weight: bold; filter: drop-shadow(0 0 4px rgba(59,130,246,0.3));">⏳</span>';
-          const submittedDate = t.completion.submitted_at ? new Date(t.completion.submitted_at).toLocaleDateString() : '';
+          const submittedDate = t.completion.submitted_at ? parseDbDateTime(t.completion.submitted_at).toLocaleDateString() : '';
           extraText = `<span style="font-size: 0.7rem; color: var(--accent-blue); padding-left: 8px; font-weight: 500;">(Awaiting Approval${submittedDate ? ' · ' + submittedDate : ''})</span>`;
         } else if (isDone) {
           icon = '<span style="color: var(--accent-green); font-weight: bold; filter: drop-shadow(0 0 4px rgba(16,185,129,0.3));">✓</span>';
           textStyle = 'text-decoration: line-through; color: var(--text-muted); opacity: 0.8;';
-          const approvedDate = t.completion.completed_at ? new Date(t.completion.completed_at).toLocaleDateString() : '';
+          const approvedDate = t.completion.completed_at ? parseDbDateTime(t.completion.completed_at).toLocaleDateString() : '';
           extraText = `<span style="font-size: 0.7rem; color: var(--accent-green); padding-left: 8px; font-weight: 500;">(Approved${approvedDate ? ' · ' + approvedDate : ''})</span>`;
         }
 
@@ -717,7 +730,7 @@ function ensureManagerLmsModal() {
     });
 
     btnLmsComplete.addEventListener('click', async () => {
-      if (!activeTodo || !expandedUserId) return;
+      if (!activeTodo || !lmsModalUserId) return;
 
       const status = activeTodo.completion.status || (activeTodo.completion.completed ? "completed" : "incomplete");
       let action = "approve"; // default to grant
@@ -732,7 +745,7 @@ function ensureManagerLmsModal() {
         const res = await fetch("/api/todos/approvals", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: expandedUserId, todoId: activeTodo.id, action })
+          body: JSON.stringify({ userId: lmsModalUserId, todoId: activeTodo.id, action })
         });
 
         if (!res.ok) {
@@ -742,14 +755,19 @@ function ensureManagerLmsModal() {
 
         showToast(action === "approve" ? "Status updated: Completed" : "Status updated: Revoked", "success");
 
-        await loadUserTodosForExpand(expandedUserId);
+        if (expandedUserId === lmsModalUserId) {
+          await loadUserTodosForExpand(lmsModalUserId);
 
-        const updatedTodo = activeUserTodos.find(x => x.id === activeTodo.id);
-        if (updatedTodo) {
-          activeTodo = updatedTodo;
-          updateManagerLmsButtonState();
+          const updatedTodo = activeUserTodos.find(x => x.id === activeTodo.id);
+          if (updatedTodo) {
+            activeTodo = updatedTodo;
+            updateManagerLmsButtonState();
+          }
+        } else {
+          lmsModal.classList.remove('visible');
         }
 
+        await loadPendingApprovals();
         await loadTeam();
 
       } catch (err) {
@@ -791,12 +809,7 @@ function ensureManagerLmsModal() {
   }
 }
 
-window.openManagerLmsModal = function (todoId) {
-  ensureManagerLmsModal();
-  const t = activeUserTodos.find(x => x.id === todoId);
-  if (!t) return;
-  activeTodo = t;
-
+function populateManagerLmsModal(t, subtitlePrefix) {
   const lmsModal = document.getElementById('lms-modal');
   const lmsTitle = document.getElementById('lms-title');
   const lmsSubtitle = document.getElementById('lms-subtitle');
@@ -806,22 +819,52 @@ window.openManagerLmsModal = function (todoId) {
   if (Array.isArray(label)) label = label.join(' ');
   const axisName = label.replace('\n', ' ');
 
-  lmsSubtitle.textContent = `Diamond ${t.diamond} · ${axisName} · Level ${t.level || 1}`;
+  const meta = `Diamond ${t.diamond} · ${axisName} · Level ${t.level || 1}`;
+  lmsSubtitle.textContent = subtitlePrefix ? `${subtitlePrefix} · ${meta}` : meta;
   lmsTitle.textContent = t.title;
   lmsContent.innerHTML = marked.parse(t.content || '');
 
-  // Populate Notes
   const displayNotes = document.getElementById('lms-user-notes-display');
   if (displayNotes) {
     const notes = (t.completion && t.completion.notes);
     displayNotes.innerHTML = notes ? marked.parse(notes) : '<i style="color: var(--text-muted);">No notes provided by user.</i>';
   }
 
-  // Reset Tab
   document.getElementById('tab-lms-info').click();
-
   updateManagerLmsButtonState();
   lmsModal.classList.add('visible');
+}
+
+window.openManagerLmsModal = function (todoId) {
+  ensureManagerLmsModal();
+  const t = activeUserTodos.find(x => x.id === todoId);
+  if (!t) return;
+  activeTodo = t;
+  lmsModalUserId = expandedUserId;
+  populateManagerLmsModal(t);
+};
+
+window.openPendingApprovalLmsModal = function (userId, todoId) {
+  ensureManagerLmsModal();
+  const p = allPendingApprovalsData.find(x => x.user_id === userId && x.todo_id === todoId);
+  if (!p) return;
+
+  lmsModalUserId = userId;
+  activeTodo = {
+    id: p.todo_id,
+    title: p.title,
+    diamond: p.diamond,
+    axis: p.axis,
+    level: p.level,
+    content: p.content,
+    completion: {
+      status: 'awaiting_approval',
+      notes: p.notes,
+      submitted_at: p.submitted_at,
+      completed_at: p.completed_at
+    }
+  };
+  populateManagerLmsModal(activeTodo, p.display_name);
 };
 
 function updateManagerLmsButtonState() {
@@ -832,18 +875,18 @@ function updateManagerLmsButtonState() {
   const status = activeTodo.completion.status || (activeTodo.completion.completed ? 'completed' : 'incomplete');
 
   if (status === 'completed') {
-    const approvedDate = activeTodo.completion.completed_at ? new Date(activeTodo.completion.completed_at).toLocaleDateString() : '';
+    const approvedDate = activeTodo.completion.completed_at ? parseDbDateTime(activeTodo.completion.completed_at).toLocaleDateString() : '';
     lmsStatus.textContent = `Status: Completed ✓ ${approvedDate ? '(' + approvedDate + ')' : ''}`;
     lmsStatus.style.color = '#10b981';
     btnLmsComplete.textContent = 'Revoke Completion ✕';
     btnLmsComplete.className = 'btn btn-secondary';
     btnLmsComplete.style.color = '#ef4444';
   } else if (status === 'awaiting_approval') {
-    const submittedDate = activeTodo.completion.submitted_at ? new Date(activeTodo.completion.submitted_at).toLocaleDateString() : '';
+    const submittedDate = activeTodo.completion.submitted_at ? parseDbDateTime(activeTodo.completion.submitted_at).toLocaleDateString() : '';
     lmsStatus.textContent = `Status: Awaiting Approval ⏳ ${submittedDate ? '(' + submittedDate + ')' : ''}`;
     lmsStatus.style.color = '#3b82f6';
-    btnLmsComplete.textContent = 'Grant Completion ✓';
-    btnLmsComplete.className = 'btn btn-primary';
+    btnLmsComplete.textContent = '✓ Approve';
+    btnLmsComplete.className = 'btn btn-primary btn-sm';
     btnLmsComplete.style.color = '';
   } else {
     lmsStatus.textContent = 'Status: Incomplete';
@@ -944,8 +987,8 @@ window.loadUserProgressReviews = async function (userId) {
     }
 
     listEl.innerHTML = reviews.map(r => {
-      const dateStr = new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-      const timeStr = new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = parseDbDateTime(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = parseDbDateTime(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
       // Get first few words for summary
       const words = r.notes.trim().split(/\s+/);
@@ -1522,52 +1565,104 @@ async function handleCSVImport() {
 
 
 // --- Pending Approvals ---
+function setupPendingApprovalsFilter() {
+  const filterEl = document.getElementById('pending-approvals-member-filter');
+  if (!filterEl) return;
+  filterEl.addEventListener('change', () => {
+    pendingApprovalMemberFilter = filterEl.value;
+    renderPendingApprovals();
+  });
+}
+
+function updatePendingApprovalMemberFilterOptions() {
+  const filterEl = document.getElementById('pending-approvals-member-filter');
+  if (!filterEl) return;
+
+  const previousFilter = pendingApprovalMemberFilter;
+  const members = [];
+  const seen = new Set();
+
+  for (const p of allPendingApprovalsData) {
+    if (!seen.has(p.user_id)) {
+      seen.add(p.user_id);
+      members.push({ id: p.user_id, name: p.display_name });
+    }
+  }
+
+  members.sort((a, b) => a.name.localeCompare(b.name));
+
+  filterEl.innerHTML = '<option value="">All team members</option>' +
+    members.map(m => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+
+  if (previousFilter && members.some(m => String(m.id) === String(previousFilter))) {
+    filterEl.value = previousFilter;
+    pendingApprovalMemberFilter = previousFilter;
+  } else {
+    filterEl.value = '';
+    pendingApprovalMemberFilter = '';
+  }
+}
+
 async function loadPendingApprovals() {
   try {
     const res = await fetch('/api/todos/pending-approvals');
-    const pending = await res.json();
-    renderPendingApprovals(pending);
+    allPendingApprovalsData = await res.json();
+    updatePendingApprovalMemberFilterOptions();
+    renderPendingApprovals();
   } catch (err) {
     showToast('Failed to load approvals', 'error');
   }
 }
 
-function renderPendingApprovals(pending) {
+function renderPendingApprovals() {
   const listEl = document.getElementById('pending-approvals-list');
   if (!listEl) return;
 
-  if (!pending || pending.length === 0) {
+  if (!allPendingApprovalsData || allPendingApprovalsData.length === 0) {
     listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No pending approvals.</p>';
     return;
   }
 
+  let pending = allPendingApprovalsData;
+  if (pendingApprovalMemberFilter) {
+    pending = pending.filter(p => String(p.user_id) === String(pendingApprovalMemberFilter));
+  }
+
+  if (pending.length === 0) {
+    listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No pending approvals for this team member.</p>';
+    return;
+  }
+
   listEl.innerHTML = pending.map(p => {
-    // Determine Axis name
     const diamondAxes = DIAMOND_LABELS[p.diamond];
     let label = diamondAxes ? diamondAxes[p.axis - 1] : `Axis ${p.axis}`;
     const axisName = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
 
+    const rawTs = p.submitted_at || p.completed_at;
+    const parsed = parseDbDateTime(rawTs);
+    const displayed = parsed && !isNaN(parsed) ? parsed.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '';
+
     return `
-      <div class="card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); flex-direction: column; gap: 12px;">
+      <div class="card pending-approval-card" onclick="openPendingApprovalLmsModal(${p.user_id}, ${p.todo_id})" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); flex-direction: column; gap: 12px; cursor: pointer; transition: background 0.15s;" title="Click to review task instructions">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%;">
           <div style="flex: 1;">
             <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: var(--text-primary);">
               <span style="color: var(--text-muted); font-weight: normal; margin-right: 8px;">👤 ${escapeHtml(p.display_name)}</span>
-              ${escapeHtml(p.title)}
+              <span class="pending-title-text" style="font-weight: 600;">${escapeHtml(p.title)}</span>
             </h4>
             <div style="font-size: 0.8rem; color: var(--text-secondary);">
               💎 Diamond ${p.diamond} · ${axisName} · Level ${p.level} <br/>
-              <span style="color: var(--text-muted);">Submitted: ${new Date(p.submitted_at || p.completed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+              <span style="color: var(--text-muted);">Submitted: ${displayed}</span>
             </div>
           </div>
-          <div style="display: flex; gap: 8px; flex-shrink: 0;">
+          <div style="display: flex; gap: 8px; flex-shrink: 0; align-items: center;" onclick="event.stopPropagation()">
             ${p.notes ? `<button class="btn btn-secondary btn-sm" onclick="togglePendingNotes(${p.user_id}, ${p.todo_id})">📝 View Notes</button>` : ''}
             <button class="btn btn-primary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'approve')">✓ Approve</button>
             <button class="btn btn-secondary btn-sm" onclick="handleApproval(${p.user_id}, ${p.todo_id}, 'deny')" style="color: #ef4444;">✕ Deny</button>
           </div>
         </div>
         ${p.notes ? `
-          <div id="pending-notes-${p.user_id}-${p.todo_id}" style="display: none; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.95rem; color: var(--text-secondary); width: 100%; line-height: 1.6;">
+          <div id="pending-notes-${p.user_id}-${p.todo_id}" style="display: none; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.95rem; color: var(--text-secondary); width: 100%; line-height: 1.6;" onclick="event.stopPropagation()">
             <strong style="display: block; margin-bottom: 12px; color: var(--text-primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">User Notes:</strong>
             <div class="markdown-content">${marked.parse(p.notes)}</div>
           </div>
@@ -1600,7 +1695,7 @@ window.handleApproval = async function (userId, todoId, action) {
     loadPendingApprovals();
 
     if (action === 'approve') {
-      loadTeam(); // Reload team data since their diamond might have updated
+      await loadTeam(); // Reload team data since their diamond might have updated
     }
   } catch (err) {
     showToast(err.message, 'error');
@@ -1631,7 +1726,8 @@ function scoreBadge(val) {
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
+  const d = parseDbDateTime(dateStr);
+  if (!d || isNaN(d)) return '—';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
