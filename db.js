@@ -53,6 +53,7 @@ db.exec(`
     level INTEGER NOT NULL DEFAULT 1 CHECK(level BETWEEN 1 AND 5),
     title TEXT NOT NULL,
     content TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -121,6 +122,42 @@ try {
   // Column already exists
 }
 
+// Add sort_order for checklist task ordering within a diamond/axis/level group
+try {
+  db.exec('ALTER TABLE todos ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
+} catch (e) {
+  // Column already exists
+}
+
+// One-time: assign sort_order from current order and strip "Step N:" from stored titles
+const sortMigrated = db.prepare("SELECT value FROM settings WHERE key = 'todos_sort_order_migrated'").get();
+if (!sortMigrated) {
+  const stripStepPrefix = (title) => String(title || '').replace(/^Step\s+\d+\s*:\s*/i, '').trim();
+  const groups = db.prepare(`
+    SELECT diamond, axis, level
+    FROM todos
+    GROUP BY diamond, axis, level
+  `).all();
+  const updateOrder = db.prepare('UPDATE todos SET sort_order = ?, title = ? WHERE id = ?');
+  const getGroupTodos = db.prepare(`
+    SELECT id, title FROM todos
+    WHERE diamond = ? AND axis = ? AND level = ?
+    ORDER BY created_at ASC, id ASC
+  `);
+
+  const migrate = db.transaction(() => {
+    for (const g of groups) {
+      const items = getGroupTodos.all(g.diamond, g.axis, g.level);
+      items.forEach((item, index) => {
+        updateOrder.run(index + 1, stripStepPrefix(item.title) || item.title, item.id);
+      });
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('todos_sort_order_migrated', '1')").run();
+  });
+  migrate();
+  console.log('Migrated todo sort_order and stripped Step prefixes from titles.');
+}
+
 // Add 'snapshot_type' column migration to skill_snapshots
 try {
   db.exec("ALTER TABLE skill_snapshots ADD COLUMN snapshot_type TEXT NOT NULL DEFAULT 'current' CHECK(snapshot_type IN ('current', 'aim'))");
@@ -166,6 +203,18 @@ if (!teamPw) {
   console.log('⚠️  Default team password set to "team" — change this in Settings!');
 }
 
+// Seed default Diamond axis labels if not set
+const defaultAxes = {
+  diamond_1_axes: ['Troubleshooting', 'OSs', 'Customer Support', 'Operations'],
+  diamond_2_axes: ['Security', 'AV', 'Network', 'Project Management']
+};
+for (const [key, labels] of Object.entries(defaultAxes)) {
+  const existing = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+  if (!existing) {
+    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(labels));
+  }
+}
+
 // Seed curriculum on fresh database setup (Initial Seed Mode)
 const todoCount = db.prepare('SELECT COUNT(*) as count FROM todos').get();
 if (todoCount.count === 0) {
@@ -178,14 +227,20 @@ if (todoCount.count === 0) {
       const curriculumData = JSON.parse(fs.readFileSync(curriculumPath, 'utf8'));
       
       const insertTodo = db.prepare(`
-        INSERT INTO todos (diamond, axis, level, title, content)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO todos (diamond, axis, level, title, content, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
+      const stripStepPrefix = (title) => String(title || '').replace(/^Step\s+\d+\s*:\s*/i, '').trim();
+      const groupCounts = new Map();
 
       const seedCurriculum = db.transaction((todos) => {
         let added = 0;
         for (const item of todos) {
-          insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
+          const key = `${item.diamond}-${item.axis}-${item.level}`;
+          const next = (groupCounts.get(key) || 0) + 1;
+          groupCounts.set(key, next);
+          const bareTitle = stripStepPrefix(item.title) || item.title;
+          insertTodo.run(item.diamond, item.axis, item.level, bareTitle, item.content || '', next);
           added++;
         }
         console.log(`Initialized database: seeded ${added} to-do items from ${curriculumFile}.`);

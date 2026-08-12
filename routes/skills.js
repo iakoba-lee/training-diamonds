@@ -2,12 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireManager } = require('../middleware/auth');
-
-// Axis labels for reference
-const DIAMOND_AXES = {
-  1: ['Applications', 'OSs', 'Customer Service', 'Operations'],
-  2: ['Security', 'AV', 'Network', 'Project Management/Leadership']
-};
+const { getDiamondAxes } = require('../lib/diamondLabels');
 
 // GET /api/skills/averages — get team-wide averages
 router.get('/averages', (req, res) => {
@@ -58,9 +53,15 @@ router.get('/averages', (req, res) => {
   res.json(averages);
 });
 
+// GET /api/skills/axes — get configurable Diamond goal labels
+router.get('/axes', (req, res) => {
+  res.json(getDiamondAxes());
+});
+
 // GET /api/skills/:userId/latest — get latest current + aim for both diamonds
 router.get('/:userId/latest', (req, res) => {
   const { userId } = req.params;
+  const axes = getDiamondAxes();
 
   const getLatest = db.prepare(`
     SELECT * FROM skill_snapshots
@@ -73,12 +74,12 @@ router.get('/:userId/latest', (req, res) => {
     diamond1: {
       current: getLatest.get(userId, 1, 'current') || null,
       aim: getLatest.get(userId, 1, 'aim') || null,
-      axes: DIAMOND_AXES[1]
+      axes: axes[1]
     },
     diamond2: {
       current: getLatest.get(userId, 2, 'current') || null,
       aim: getLatest.get(userId, 2, 'aim') || null,
-      axes: DIAMOND_AXES[2]
+      axes: axes[2]
     }
   };
 

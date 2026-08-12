@@ -4,7 +4,7 @@ Track Diamond 1 and Diamond 2 certification progress for your tech support team 
 
 ## Features
 
-- **Two radar charts** — Diamond 1 (Applications, OSs, Customer Service, Operations) and Diamond 2 (Security, AV, Network, Project Management/Leadership)
+- **Two radar charts** — Diamond 1 (Troubleshooting, OSs, Customer Support, Operations) and Diamond 2 (Security, AV, Network, Project Management/Leadership)
 - **Current vs. Aim overlay** — See where you are (red) and where you're headed (blue)
 - **Quick skill updates** — Sliders for instant 1–5 scoring
 - **Manager View** — Team-wide tracking with individual drill-down

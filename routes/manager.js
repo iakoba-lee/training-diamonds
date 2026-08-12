@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { getDiamondAxes, setAllDiamondAxes } = require('../lib/diamondLabels');
 
 // GET /api/manager/team-overview — all users with their latest snapshots
 router.get('/team-overview', (req, res) => {
@@ -107,6 +108,29 @@ router.get('/progress-reviews/:userId', (req, res) => {
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/manager/diamond-labels — current Diamond goal labels
+router.get('/diamond-labels', (req, res) => {
+  res.json(getDiamondAxes());
+});
+
+// PUT /api/manager/diamond-labels — update Diamond goal labels
+router.put('/diamond-labels', (req, res) => {
+  try {
+    const body = req.body || {};
+    const payload = {
+      1: body[1] || body['1'],
+      2: body[2] || body['2']
+    };
+    if (!payload[1] || !payload[2]) {
+      return res.status(400).json({ error: 'Both diamond 1 and diamond 2 labels are required' });
+    }
+    const updated = setAllDiamondAxes(payload);
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 

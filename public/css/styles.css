@@ -353,6 +353,26 @@ textarea {
   gap: 12px;
 }
 
+.todo-drag-handle {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.todo-item.todo-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.todo-item.todo-drag-over {
+  outline: 1px dashed var(--accent-blue);
+  outline-offset: 2px;
+}
+
 .todo-add-form {
   margin-top: 24px;
   padding-top: 24px;
@@ -975,6 +995,43 @@ input[type="range"].slider-current {
   transform: translateY(0) scale(1);
 }
 
+.modal.todo-form-modal {
+  max-width: 640px;
+  padding: 28px;
+}
+
+.modal.todo-form-modal .todo-add-form {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.modal.todo-form-modal h2 {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.modal textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 140px;
+  transition: border-color var(--transition-fast);
+}
+
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
 /* --- LMS Modal Content (Markdown Styling) --- */
 #lms-content p {
   margin-bottom: 1.25rem;
@@ -1571,6 +1628,50 @@ input[type="range"].slider-current {
   margin-top: 32px;
 }
 
+.axis-labels-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.axis-labels-heading {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.axis-labels-column .form-group {
+  margin-bottom: 12px;
+}
+
+.axis-labels-column label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.axis-labels-column input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  transition: border-color var(--transition-fast);
+}
+
+.axis-labels-column input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1620,7 +1721,8 @@ input[type="range"].slider-current {
 }
 
 @media (max-width: 900px) {
-  .settings-grid {
+  .settings-grid,
+  .axis-labels-editor {
     grid-template-columns: 1fr;
   }
 }

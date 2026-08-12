@@ -34,10 +34,38 @@ const navbarRole = document.getElementById('navbar-role');
 const btnLogout = document.getElementById('btn-logout');
 
 // --- Chart Configuration ---
-const DIAMOND_LABELS = {
-  1: ['Applications', 'OSs', ['Customer', 'Service'], 'Operations'],
+// Labels loaded from API; defaults used until then
+let DIAMOND_LABELS = {
+  1: ['Troubleshooting', 'OSs', ['Customer', 'Support'], 'Operations'],
   2: ['Security', 'AV', 'Network', ['Project', 'Management']]
 };
+
+/** Split multi-word labels for Chart.js multi-line point labels */
+function toChartLabels(labels) {
+  return labels.map(label => {
+    const parts = String(label).trim().split(/\s+/).filter(Boolean);
+    return parts.length > 1 ? parts : (parts[0] || label);
+  });
+}
+
+function displayLabel(label) {
+  return (Array.isArray(label) ? label.join(' ') : String(label)).replace('\n', ' ');
+}
+
+function applyDiamondLabels(axes) {
+  DIAMOND_LABELS = {
+    1: toChartLabels(axes[1] || axes['1']),
+    2: toChartLabels(axes[2] || axes['2'])
+  };
+  updateDiamondSubtitles();
+}
+
+function updateDiamondSubtitles() {
+  const d1 = document.querySelector('#diamond1-card .card-subtitle');
+  const d2 = document.querySelector('#diamond2-card .card-subtitle');
+  if (d1) d1.textContent = DIAMOND_LABELS[1].map(displayLabel).join(' · ');
+  if (d2) d2.textContent = DIAMOND_LABELS[2].map(displayLabel).join(' · ');
+}
 
 const CHART_OPTIONS = {
   responsive: true,
@@ -142,10 +170,17 @@ async function checkAuth() {
   }
 
   try {
+    await loadDiamondLabels();
     initDashboard();
   } catch (err) {
     console.error('Error initializing dashboard:', err);
   }
+}
+
+async function loadDiamondLabels() {
+  const res = await fetch('/api/skills/axes');
+  if (!res.ok) throw new Error('Failed to load goal labels');
+  applyDiamondLabels(await res.json());
 }
 
 // --- Initialize Dashboard after auth ---
@@ -417,10 +452,11 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
             </h5>
       `;
 
-      html += levelTodos.map(t => {
+      html += levelTodos.map((t, index) => {
         const status = t.completion.status || (t.completion.completed ? 'completed' : 'incomplete');
         const isDone = status === 'completed';
         const isAwaiting = status === 'awaiting_approval';
+        const displayTitle = formatStepTitle(index + 1, t.title);
 
         let icon = '<span style="color: var(--text-muted); font-size: 0.8rem;">○</span>';
         let textStyle = '';
@@ -438,7 +474,7 @@ function renderDiamondTodos(diamond, containerEl, listEl) {
         return `
           <div class="todo-item-row" onclick="openLmsModal(${t.id})" style="cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 12px; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
             ${icon}
-            <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
+            <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; ${textStyle}">${escapeHtml(displayTitle)}</span>
             ${extraText}
           </div>
         `;
@@ -613,7 +649,7 @@ window.openLmsModal = function (todoId) {
   let label = DIAMOND_LABELS[t.diamond][t.axis - 1];
   const axisName = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
   lmsSubtitle.textContent = `Diamond ${t.diamond} · ${axisName}`;
-  lmsTitle.textContent = t.title;
+  lmsTitle.textContent = formatStepTitle(getTodoStepNumber(t, userTodos), t.title);
 
   // Parse Markdown to HTML
   lmsContent.innerHTML = marked.parse(t.content || '');
@@ -664,6 +700,23 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function stripStepPrefix(title) {
+  return String(title || '').replace(/^Step\s+\d+\s*:\s*/i, '').trim();
+}
+
+function formatStepTitle(stepNumber, title) {
+  return `Step ${stepNumber}: ${stripStepPrefix(title)}`;
+}
+
+function getTodoStepNumber(todo, todos = []) {
+  if (!todo) return 1;
+  const peers = todos
+    .filter(t => t.diamond === todo.diamond && t.axis === todo.axis && t.level === todo.level)
+    .sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id));
+  const idx = peers.findIndex(t => t.id === todo.id);
+  return idx >= 0 ? idx + 1 : 1;
 }
 
 // --- Toast ---

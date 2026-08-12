@@ -161,20 +161,8 @@
           <!-- Populated via JS -->
         </div>
 
-        <div class="todo-add-form" id="todo-form-container">
-          <h3 id="todo-form-title">Add New Task</h3>
-          <div class="form-group">
-            <label for="todo-new-title">Task Title</label>
-            <input type="text" id="todo-new-title" placeholder="e.g., Read the Security Policy">
-          </div>
-          <div class="form-group">
-            <label for="todo-new-content">Content (Markdown supported)</label>
-            <textarea id="todo-new-content" rows="4" placeholder="Instructions, links, or details..."></textarea>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-primary btn-sm" id="btn-add-todo">Add Task</button>
-            <button class="btn btn-secondary btn-sm hidden" id="btn-cancel-todo-edit">Cancel</button>
-          </div>
+        <div class="btn-group" style="margin-top: 16px;">
+          <button class="btn btn-primary btn-sm" id="btn-open-add-todo">+ Add Task</button>
         </div>
         
         <!-- Bulk Import Section -->
@@ -204,7 +192,7 @@
                     <td><code>1</code></td>
                     <td><code>1</code></td>
                     <td><code>1</code></td>
-                    <td>Step 1: Set up RingCentral</td>
+                    <td>Set up RingCentral</td>
                     <td>Complete the setup guide and verify call routing.</td>
                   </tr>
                   <tr>
@@ -231,7 +219,7 @@
               </div>
               <div>
                 <dt><code>axis</code></dt>
-                <dd>Goal index <code>1</code>–<code>4</code> (Diamond 1: Apps, OSs, Customer Service, Operations)</dd>
+                <dd id="csv-axis-legend">Goal index <code>1</code>–<code>4</code> (Diamond 1: Troubleshooting, OSs, Customer Support, Operations)</dd>
               </div>
               <div>
                 <dt><code>level</code></dt>
@@ -263,6 +251,58 @@
     <!-- Settings Panel (Manager Only) -->
     <div class="settings-panel hidden" id="settings-panel">
       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🎯 Goal Labels</div>
+            <div class="card-subtitle">Rename the four goals on each Diamond chart</div>
+          </div>
+        </div>
+        <div class="axis-labels-editor">
+          <div class="axis-labels-column">
+            <h4 class="axis-labels-heading">Diamond 1</h4>
+            <div class="form-group">
+              <label for="axis-label-1-1">Goal 1</label>
+              <input type="text" id="axis-label-1-1" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-1-2">Goal 2</label>
+              <input type="text" id="axis-label-1-2" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-1-3">Goal 3</label>
+              <input type="text" id="axis-label-1-3" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-1-4">Goal 4</label>
+              <input type="text" id="axis-label-1-4" maxlength="40" autocomplete="off">
+            </div>
+          </div>
+          <div class="axis-labels-column">
+            <h4 class="axis-labels-heading">Diamond 2</h4>
+            <div class="form-group">
+              <label for="axis-label-2-1">Goal 1</label>
+              <input type="text" id="axis-label-2-1" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-2-2">Goal 2</label>
+              <input type="text" id="axis-label-2-2" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-2-3">Goal 3</label>
+              <input type="text" id="axis-label-2-3" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="axis-label-2-4">Goal 4</label>
+              <input type="text" id="axis-label-2-4" maxlength="40" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <div class="btn-group" style="margin-top: 8px;">
+          <button class="btn btn-primary btn-sm" id="btn-save-axis-labels">Save Goal Labels</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
         <div class="card-header">
           <div>
             <div class="card-title">🔒 Access Code Settings</div>
@@ -311,6 +351,30 @@
       <div class="btn-group">
         <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
         <button class="btn btn-primary" id="btn-modal-confirm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Task Modal -->
+  <div class="modal-overlay" id="todo-form-modal">
+    <div class="modal todo-form-modal">
+      <div class="todo-add-form" id="todo-form-container">
+        <h2 id="todo-form-title">Add New Task</h2>
+        <div class="form-group">
+          <label for="todo-new-title">Task Title</label>
+          <input type="text" id="todo-new-title" placeholder="e.g., Read the Security Policy" autocomplete="off">
+          <p style="margin: 6px 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            Don’t include “Step 1:” — the step number is added automatically from the task order.
+          </p>
+        </div>
+        <div class="form-group">
+          <label for="todo-new-content">Content (Markdown supported)</label>
+          <textarea id="todo-new-content" rows="8" placeholder="Instructions, links, or details..."></textarea>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btn-cancel-todo-edit">Cancel</button>
+          <button class="btn btn-primary" id="btn-add-todo">Add Task</button>
+        </div>
       </div>
     </div>
   </div>

@@ -3,6 +3,20 @@ const router = express.Router();
 const db = require('../db');
 const { requireManager } = require('../middleware/auth');
 
+/** Strip display-only "Step N:" prefixes so titles stay bare in the DB. */
+function stripStepPrefix(title) {
+  return String(title || '').replace(/^Step\s+\d+\s*:\s*/i, '').trim();
+}
+
+function nextSortOrder(diamond, axis, level) {
+  const row = db.prepare(`
+    SELECT COALESCE(MAX(sort_order), 0) AS max_order
+    FROM todos
+    WHERE diamond = ? AND axis = ? AND level = ?
+  `).get(diamond, axis, level);
+  return (row?.max_order || 0) + 1;
+}
+
 /**
  * Recalculates the user's skill diamond snapshot based on completed tasks.
  * The level for an axis is the highest level L where ALL tasks in levels 1 through L are complete.
@@ -66,9 +80,9 @@ router.get('/', (req, res) => {
 
   try {
     const todos = db.prepare(`
-      SELECT id, diamond, axis, level, title, content, created_at
+      SELECT id, diamond, axis, level, title, content, sort_order, created_at
       FROM todos
-      ORDER BY diamond ASC, axis ASC, created_at ASC
+      ORDER BY diamond ASC, axis ASC, level ASC, sort_order ASC, id ASC
     `).all();
 
     if (userId) {
@@ -109,19 +123,64 @@ router.get('/', (req, res) => {
 // POST /api/todos - Manager only
 router.post('/', requireManager, (req, res) => {
   const { diamond, axis, level, title, content } = req.body;
+  const bareTitle = stripStepPrefix(title);
 
-  if (!diamond || !axis || !level || !title) {
+  if (!diamond || !axis || !level || !bareTitle) {
     return res.status(400).json({ error: 'diamond, axis, level, and title are required' });
   }
 
   try {
+    const sortOrder = nextSortOrder(diamond, axis, level);
     const result = db.prepare(`
-      INSERT INTO todos (diamond, axis, level, title, content)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(diamond, axis, level, title, content || '');
+      INSERT INTO todos (diamond, axis, level, title, content, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(diamond, axis, level, bareTitle, content || '', sortOrder);
 
     const newTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(newTodo);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/todos/reorder - Manager only (must be before /:id)
+router.put('/reorder', requireManager, (req, res) => {
+  const { orderedIds } = req.body;
+
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return res.status(400).json({ error: 'orderedIds array is required' });
+  }
+
+  try {
+    const placeholders = orderedIds.map(() => '?').join(',');
+    const rows = db.prepare(`SELECT id, diamond, axis, level FROM todos WHERE id IN (${placeholders})`).all(...orderedIds);
+
+    if (rows.length !== orderedIds.length) {
+      return res.status(400).json({ error: 'One or more todo ids were not found' });
+    }
+
+    const first = rows[0];
+    const sameGroup = rows.every(r => r.diamond === first.diamond && r.axis === first.axis && r.level === first.level);
+    if (!sameGroup) {
+      return res.status(400).json({ error: 'All todos must belong to the same diamond, axis, and level' });
+    }
+
+    const update = db.prepare('UPDATE todos SET sort_order = ? WHERE id = ?');
+    const reorder = db.transaction((ids) => {
+      ids.forEach((id, index) => {
+        update.run(index + 1, id);
+      });
+    });
+    reorder(orderedIds.map(Number));
+
+    const updated = db.prepare(`
+      SELECT id, diamond, axis, level, title, content, sort_order, created_at
+      FROM todos
+      WHERE diamond = ? AND axis = ? AND level = ?
+      ORDER BY sort_order ASC, id ASC
+    `).all(first.diamond, first.axis, first.level);
+
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -138,11 +197,13 @@ router.put('/:id', requireManager, (req, res) => {
       return res.status(404).json({ error: 'Todo not found' });
     }
 
+    const nextTitle = title !== undefined ? (stripStepPrefix(title) || todo.title) : todo.title;
+
     db.prepare(`
       UPDATE todos
       SET title = ?, content = ?, level = ?
       WHERE id = ?
-    `).run(title || todo.title, content || todo.content, req.body.level || todo.level, id);
+    `).run(nextTitle, content !== undefined ? content : todo.content, req.body.level || todo.level, id);
 
     const updatedTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
     res.json(updatedTodo);
@@ -156,10 +217,23 @@ router.delete('/:id', requireManager, (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = db.prepare('DELETE FROM todos WHERE id = ?').run(id);
-    if (result.changes === 0) {
+    const todo = db.prepare('SELECT id, diamond FROM todos WHERE id = ?').get(id);
+    if (!todo) {
       return res.status(404).json({ error: 'Todo not found' });
     }
+
+    // Capture users who had progress on this todo before CASCADE clears user_todos
+    const affectedUsers = db.prepare(`
+      SELECT DISTINCT user_id FROM user_todos WHERE todo_id = ?
+    `).all(id).map(r => r.user_id);
+
+    db.prepare('DELETE FROM todos WHERE id = ?').run(id);
+
+    // Recalculate current scores so deleted completed steps don't leave stale progress
+    for (const userId of affectedUsers) {
+      syncUserDiamondSnapshot(userId, todo.diamond);
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -311,8 +385,8 @@ router.post('/bulk', requireManager, (req, res) => {
     `);
     
     const insertTodo = db.prepare(`
-      INSERT INTO todos (diamond, axis, level, title, content)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO todos (diamond, axis, level, title, content, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
     
     const updateTodo = db.prepare(`
@@ -323,9 +397,12 @@ router.post('/bulk', requireManager, (req, res) => {
       let added = 0;
       let updated = 0;
       for (const item of items) {
-        const existing = checkTodo.get(item.diamond, item.axis, item.level, item.title);
+        const bareTitle = stripStepPrefix(item.title);
+        if (!bareTitle) continue;
+        const existing = checkTodo.get(item.diamond, item.axis, item.level, bareTitle);
         if (!existing) {
-          insertTodo.run(item.diamond, item.axis, item.level, item.title, item.content || '');
+          const sortOrder = nextSortOrder(item.diamond, item.axis, item.level);
+          insertTodo.run(item.diamond, item.axis, item.level, bareTitle, item.content || '', sortOrder);
           added++;
         } else {
           updateTodo.run(item.content || '', existing.id);

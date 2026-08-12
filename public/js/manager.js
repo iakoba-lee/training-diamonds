@@ -39,10 +39,30 @@ const navbarRole = document.getElementById('navbar-role');
 const btnLogout = document.getElementById('btn-logout');
 
 // --- Chart config ---
-const DIAMOND_LABELS = {
-  1: ['Applications', 'OSs', ['Customer', 'Service'], 'Operations'],
+// Labels loaded from API; defaults used until then
+let DIAMOND_LABELS = {
+  1: ['Troubleshooting', 'OSs', ['Customer', 'Support'], 'Operations'],
   2: ['Security', 'AV', 'Network', ['Project', 'Management']]
 };
+
+/** Split multi-word labels for Chart.js multi-line point labels */
+function toChartLabels(labels) {
+  return labels.map(label => {
+    const parts = String(label).trim().split(/\s+/).filter(Boolean);
+    return parts.length > 1 ? parts : (parts[0] || label);
+  });
+}
+
+function displayLabel(label) {
+  return (Array.isArray(label) ? label.join(' ') : String(label)).replace('\n', ' ');
+}
+
+function applyDiamondLabels(axes) {
+  DIAMOND_LABELS = {
+    1: toChartLabels(axes[1] || axes['1']),
+    2: toChartLabels(axes[2] || axes['2'])
+  };
+}
 
 const BASE_CHART_OPTIONS = {
   responsive: true,
@@ -93,14 +113,14 @@ async function checkAuth() {
     }
     const data = await res.json();
     currentRole = data.role;
-    initManagerView();
+    await initManagerView();
   } catch (err) {
     window.location.href = '/login';
   }
 }
 
 // --- Initialize after auth ---
-function initManagerView() {
+async function initManagerView() {
   // Navbar
   navbarRole.textContent = currentRole === 'manager' ? '⭐ Manager' : '👥 Team';
   navbarRole.className = `navbar-role role-${currentRole}`;
@@ -110,6 +130,8 @@ function initManagerView() {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
   });
+
+  await loadDiamondLabels();
 
   // Show manager-only controls
   if (currentRole === 'manager') {
@@ -131,6 +153,36 @@ function initManagerView() {
 
   loadTeam();
   setupModal();
+}
+
+async function loadDiamondLabels() {
+  try {
+    const res = await fetch('/api/skills/axes');
+    if (!res.ok) throw new Error('Failed to load goal labels');
+    const axes = await res.json();
+    applyDiamondLabels(axes);
+    fillAxisLabelInputs(axes);
+    updateCsvAxisLegend();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function fillAxisLabelInputs(axes) {
+  for (const diamond of [1, 2]) {
+    const labels = axes[diamond] || axes[String(diamond)] || [];
+    for (let i = 0; i < 4; i++) {
+      const input = document.getElementById(`axis-label-${diamond}-${i + 1}`);
+      if (input) input.value = labels[i] || '';
+    }
+  }
+}
+
+function updateCsvAxisLegend() {
+  const el = document.getElementById('csv-axis-legend');
+  if (!el) return;
+  const d1 = DIAMOND_LABELS[1].map(displayLabel).join(', ');
+  el.innerHTML = `Goal index <code>1</code>–<code>4</code> (Diamond 1: ${d1})`;
 }
 
 // --- Load Team ---
@@ -628,10 +680,11 @@ function renderDiamondTodosExpand(diamond, userId) {
             </h5>
       `;
 
-      html += levelTodos.map(t => {
+      html += levelTodos.map((t, index) => {
         const status = t.completion.status || (t.completion.completed ? 'completed' : 'incomplete');
         const isDone = status === 'completed';
         const isAwaiting = status === 'awaiting_approval';
+        const displayTitle = formatStepTitle(index + 1, t.title);
 
         let icon = '<span style="color: var(--text-muted); font-size: 0.85rem; opacity: 0.5;">○</span>';
         let textStyle = '';
@@ -657,7 +710,7 @@ function renderDiamondTodosExpand(diamond, userId) {
                   style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: background 0.2s;">
               ${icon}
             </span>
-            <span style="color: var(--text-primary); font-size: 0.875rem; font-weight: 500; ${textStyle}">${escapeHtml(t.title)}</span>
+            <span style="color: var(--text-primary); font-size: 0.875rem; font-weight: 500; ${textStyle}">${escapeHtml(displayTitle)}</span>
             ${extraText}
           </div>
         `;
@@ -821,7 +874,8 @@ function populateManagerLmsModal(t, subtitlePrefix) {
 
   const meta = `Diamond ${t.diamond} · ${axisName} · Level ${t.level || 1}`;
   lmsSubtitle.textContent = subtitlePrefix ? `${subtitlePrefix} · ${meta}` : meta;
-  lmsTitle.textContent = t.title;
+  const stepPool = (activeUserTodos || []).some(x => x.id === t.id) ? activeUserTodos : managerTodos;
+  lmsTitle.textContent = formatStepTitle(getTodoStepNumber(t, stepPool), t.title);
   lmsContent.innerHTML = marked.parse(t.content || '');
 
   const displayNotes = document.getElementById('lms-user-notes-display');
@@ -1235,6 +1289,56 @@ function setupSettings() {
     await changePassword('manager', pw);
     document.getElementById('settings-manager-pw').value = '';
   });
+
+  document.getElementById('btn-save-axis-labels').addEventListener('click', saveAxisLabels);
+}
+
+async function saveAxisLabels() {
+  const payload = { 1: [], 2: [] };
+  for (const diamond of [1, 2]) {
+    for (let i = 1; i <= 4; i++) {
+      const input = document.getElementById(`axis-label-${diamond}-${i}`);
+      const value = (input?.value || '').trim();
+      if (!value) {
+        showToast(`Diamond ${diamond} Goal ${i} cannot be empty`, 'error');
+        return;
+      }
+      payload[diamond].push(value);
+    }
+  }
+
+  const btn = document.getElementById('btn-save-axis-labels');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/manager/diamond-labels', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to save');
+    }
+    const axes = await res.json();
+    applyDiamondLabels(axes);
+    fillAxisLabelInputs(axes);
+    updateCsvAxisLegend();
+    updateAxisLabels();
+    renderTeamAverages();
+    if (expandedUserId) {
+      const user = teamData.find(u => u.id === expandedUserId);
+      if (user) {
+        renderExpandCharts(user);
+        renderAimSliders(user);
+        loadUserTodosForExpand(user.id);
+      }
+    }
+    showToast('Goal labels saved!', 'success');
+  } catch (err) {
+    showToast('Failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function changePassword(target, newPassword) {
@@ -1264,6 +1368,7 @@ const newContentInput = document.getElementById('todo-new-content');
 const btnAddTodo = document.getElementById('btn-add-todo');
 const btnCancelTodoEdit = document.getElementById('btn-cancel-todo-edit');
 const todoFormTitle = document.getElementById('todo-form-title');
+const todoFormModal = document.getElementById('todo-form-modal');
 let managerTodos = [];
 let editingTodoId = null; // null = adding, number = editing
 let previewingTodoId = null; // Track which todo is currently previewing content
@@ -1285,8 +1390,7 @@ function updateAxisLabels() {
   const labels = DIAMOND_LABELS[diamond];
 
   axisSelect.innerHTML = labels.map((label, i) => {
-    const displayLabel = (Array.isArray(label) ? label.join(' ') : label).replace('\n', ' ');
-    return `<option value="${i + 1}">${displayLabel}</option>`;
+    return `<option value="${i + 1}">${displayLabel(label)}</option>`;
   }).join('').trim();
 
   renderManagerTodos();
@@ -1298,20 +1402,27 @@ function renderManagerTodos() {
   const axis = Number(axisSelect.value);
   const level = Number(levelSelect.value);
 
-  const filtered = managerTodos.filter(t => t.diamond === diamond && t.axis === axis && t.level === level);
+  const filtered = managerTodos
+    .filter(t => t.diamond === diamond && t.axis === axis && t.level === level)
+    .sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id));
 
   if (filtered.length === 0) {
     todoListEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No tasks configured for this goal yet.</p>';
     return;
   }
 
-  todoListEl.innerHTML = filtered.map(t => {
+  todoListEl.innerHTML = filtered.map((t, index) => {
     const isPreviewing = previewingTodoId === t.id;
+    const displayTitle = formatStepTitle(index + 1, t.title);
     return `
-      <div class="todo-item card" style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); cursor: pointer;" onclick="toggleTodoPreview(${t.id})">
+      <div class="todo-item card" data-todo-id="${t.id}"
+           style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); cursor: pointer;"
+           onclick="toggleTodoPreview(${t.id})">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-          <div style="flex: 1;">
-            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(t.title)}</h4>
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+            <span class="todo-drag-handle" draggable="true" title="Drag to reorder" aria-label="Drag to reorder"
+                  onclick="event.stopPropagation()">⠿</span>
+            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(displayTitle)}</h4>
           </div>
           <div style="display: flex; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
             <button class="btn btn-secondary btn-sm" onclick="editTodo(${t.id})" title="Edit Task">✏️</button>
@@ -1328,6 +1439,116 @@ function renderManagerTodos() {
       </div>
     `;
   }).join('');
+
+  setupTodoDragAndDrop();
+}
+
+function stripStepPrefix(title) {
+  return String(title || '').replace(/^Step\s+\d+\s*:\s*/i, '').trim();
+}
+
+function formatStepTitle(stepNumber, title) {
+  return `Step ${stepNumber}: ${stripStepPrefix(title)}`;
+}
+
+function getTodoStepNumber(todo, todos = managerTodos) {
+  if (!todo) return 1;
+  const peers = todos
+    .filter(t => t.diamond === todo.diamond && t.axis === todo.axis && t.level === todo.level)
+    .sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id));
+  const idx = peers.findIndex(t => t.id === todo.id);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+function setupTodoDragAndDrop() {
+  if (!todoListEl) return;
+  const items = [...todoListEl.querySelectorAll('.todo-item[data-todo-id]')];
+  let dragEl = null;
+  let orderBeforeDrag = [];
+
+  items.forEach(item => {
+    const handle = item.querySelector('.todo-drag-handle');
+    if (!handle) return;
+
+    handle.addEventListener('dragstart', (e) => {
+      dragEl = item;
+      orderBeforeDrag = items.map(el => Number(el.dataset.todoId));
+      item.classList.add('todo-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', item.dataset.todoId);
+      // Improve ghost image: drag the whole row
+      if (e.dataTransfer.setDragImage) {
+        e.dataTransfer.setDragImage(item, 24, 20);
+      }
+    });
+
+    handle.addEventListener('dragend', async () => {
+      item.classList.remove('todo-dragging');
+      items.forEach(el => el.classList.remove('todo-drag-over'));
+      dragEl = null;
+
+      const orderAfter = [...todoListEl.querySelectorAll('.todo-item[data-todo-id]')]
+        .map(el => Number(el.dataset.todoId));
+      const changed = orderAfter.length === orderBeforeDrag.length &&
+        orderAfter.some((id, i) => id !== orderBeforeDrag[i]);
+      if (changed) {
+        await persistTodoOrder(orderAfter);
+      }
+    });
+
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!dragEl || dragEl === item) return;
+      items.forEach(el => el.classList.remove('todo-drag-over'));
+      item.classList.add('todo-drag-over');
+
+      const rect = item.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      if (after) {
+        item.after(dragEl);
+      } else {
+        item.before(dragEl);
+      }
+    });
+
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      items.forEach(el => el.classList.remove('todo-drag-over'));
+    });
+  });
+}
+
+async function persistTodoOrder(orderedIds) {
+  if (!orderedIds || orderedIds.length === 0) return;
+
+  orderedIds.forEach((id, index) => {
+    const todo = managerTodos.find(t => t.id === id);
+    if (todo) todo.sort_order = index + 1;
+  });
+  renderManagerTodos();
+
+  try {
+    const res = await fetch('/api/todos/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderedIds })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to save order');
+    }
+    const updated = await res.json();
+    updated.forEach(u => {
+      const todo = managerTodos.find(t => t.id === u.id);
+      if (todo) Object.assign(todo, u);
+    });
+    renderManagerTodos();
+    showToast('Task order updated', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    await loadManagerTodos();
+  }
 }
 
 window.toggleTodoPreview = function (id) {
@@ -1344,16 +1565,33 @@ window.editTodo = function (id) {
   if (!t) return;
 
   editingTodoId = id;
-  newTitleInput.value = t.title;
+  newTitleInput.value = stripStepPrefix(t.title);
   newContentInput.value = t.content || '';
 
   todoFormTitle.textContent = 'Edit Task';
   btnAddTodo.textContent = 'Save Changes';
-  btnCancelTodoEdit.classList.remove('hidden');
-
-  // Scroll to form
-  document.getElementById('todo-form-container').scrollIntoView({ behavior: 'smooth' });
+  openTodoFormModal();
 };
+
+window.openAddTodo = function () {
+  editingTodoId = null;
+  newTitleInput.value = '';
+  newContentInput.value = '';
+  todoFormTitle.textContent = 'Add New Task';
+  btnAddTodo.textContent = 'Add Task';
+  openTodoFormModal();
+};
+
+function openTodoFormModal() {
+  if (!todoFormModal) return;
+  todoFormModal.classList.add('visible');
+  newTitleInput.focus();
+}
+
+function closeTodoFormModal() {
+  if (!todoFormModal) return;
+  todoFormModal.classList.remove('visible');
+}
 
 window.cancelTodoEdit = function () {
   editingTodoId = null;
@@ -1362,7 +1600,7 @@ window.cancelTodoEdit = function () {
 
   todoFormTitle.textContent = 'Add New Task';
   btnAddTodo.textContent = 'Add Task';
-  btnCancelTodoEdit.classList.add('hidden');
+  closeTodoFormModal();
 };
 
 async function addTodo() {
@@ -1424,6 +1662,23 @@ function setupTodoManager() {
     levelSelect.addEventListener('change', renderManagerTodos);
     btnAddTodo.addEventListener('click', addTodo);
     btnCancelTodoEdit.addEventListener('click', cancelTodoEdit);
+
+    const btnOpenAddTodo = document.getElementById('btn-open-add-todo');
+    if (btnOpenAddTodo) {
+      btnOpenAddTodo.addEventListener('click', openAddTodo);
+    }
+
+    if (todoFormModal) {
+      todoFormModal.addEventListener('click', (e) => {
+        if (e.target === todoFormModal) cancelTodoEdit();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && todoFormModal?.classList.contains('visible')) {
+        cancelTodoEdit();
+      }
+    });
 
     const btnImportCSV = document.getElementById('btn-import-csv');
     if (btnImportCSV) {
@@ -1648,7 +1903,7 @@ function renderPendingApprovals() {
           <div style="flex: 1;">
             <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: var(--text-primary);">
               <span style="color: var(--text-muted); font-weight: normal; margin-right: 8px;">👤 ${escapeHtml(p.display_name)}</span>
-              <span class="pending-title-text" style="font-weight: 600;">${escapeHtml(p.title)}</span>
+              <span class="pending-title-text" style="font-weight: 600;">${escapeHtml(formatStepTitle(getTodoStepNumber({ id: p.todo_id, diamond: p.diamond, axis: p.axis, level: p.level }, managerTodos), p.title))}</span>
             </h4>
             <div style="font-size: 0.8rem; color: var(--text-secondary);">
               💎 Diamond ${p.diamond} · ${axisName} · Level ${p.level} <br/>
