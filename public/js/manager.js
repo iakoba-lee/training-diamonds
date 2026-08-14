@@ -1372,6 +1372,7 @@ const todoFormModal = document.getElementById('todo-form-modal');
 let managerTodos = [];
 let editingTodoId = null; // null = adding, number = editing
 let previewingTodoId = null; // Track which todo is currently previewing content
+let todoFormPublishStatus = 'draft';
 
 async function loadManagerTodos() {
   try {
@@ -1413,10 +1414,14 @@ function renderManagerTodos() {
 
   todoListEl.innerHTML = filtered.map((t, index) => {
     const isPreviewing = previewingTodoId === t.id;
+    const isDraft = t.publish_status === 'draft';
     const displayTitle = formatStepTitle(index + 1, t.title);
+    const publishLabel = isDraft ? 'Draft' : 'Published';
+    const publishTitle = isDraft ? 'Publish this task' : 'Mark as draft';
+    const borderColor = isDraft ? '#f59e0b' : 'var(--accent-blue)';
     return `
-      <div class="todo-item card" data-todo-id="${t.id}"
-           style="padding: 12px 16px; border-left: 4px solid var(--accent-blue); background: var(--bg-card); cursor: pointer;"
+      <div class="todo-item card${isDraft ? ' todo-draft' : ''}" data-todo-id="${t.id}"
+           style="padding: 12px 16px; border-left: 4px solid ${borderColor}; background: var(--bg-card); cursor: pointer;"
            onclick="toggleTodoPreview(${t.id})">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
           <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
@@ -1424,7 +1429,9 @@ function renderManagerTodos() {
                   onclick="event.stopPropagation()">⠿</span>
             <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(displayTitle)}</h4>
           </div>
-          <div style="display: flex; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
+          <div style="display: flex; gap: 8px; flex-shrink: 0; align-items: center;" onclick="event.stopPropagation()">
+            <button class="btn btn-sm todo-publish-btn ${isDraft ? 'is-draft' : 'is-published'}"
+                    onclick="toggleTodoPublish(${t.id})" title="${publishTitle}">${publishLabel}</button>
             <button class="btn btn-secondary btn-sm" onclick="editTodo(${t.id})" title="Edit Task">✏️</button>
             <button class="btn btn-danger btn-sm" onclick="deleteTodo(event, ${t.id})" title="Delete Task">✕</button>
           </div>
@@ -1567,6 +1574,7 @@ window.editTodo = function (id) {
   editingTodoId = id;
   newTitleInput.value = stripStepPrefix(t.title);
   newContentInput.value = t.content || '';
+  setTodoFormPublishStatus(t.publish_status === 'draft' ? 'draft' : 'published');
 
   todoFormTitle.textContent = 'Edit Task';
   btnAddTodo.textContent = 'Save Changes';
@@ -1577,6 +1585,7 @@ window.openAddTodo = function () {
   editingTodoId = null;
   newTitleInput.value = '';
   newContentInput.value = '';
+  setTodoFormPublishStatus('draft');
   todoFormTitle.textContent = 'Add New Task';
   btnAddTodo.textContent = 'Add Task';
   openTodoFormModal();
@@ -1597,10 +1606,48 @@ window.cancelTodoEdit = function () {
   editingTodoId = null;
   newTitleInput.value = '';
   newContentInput.value = '';
+  setTodoFormPublishStatus('draft');
 
   todoFormTitle.textContent = 'Add New Task';
   btnAddTodo.textContent = 'Add Task';
   closeTodoFormModal();
+};
+
+function setTodoFormPublishStatus(status) {
+  todoFormPublishStatus = status === 'published' ? 'published' : 'draft';
+  document.querySelectorAll('.publish-toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.status === todoFormPublishStatus);
+  });
+}
+
+window.toggleTodoPublish = async function (id) {
+  const todo = managerTodos.find(t => t.id === id);
+  if (!todo) return;
+
+  const nextStatus = todo.publish_status === 'draft' ? 'published' : 'draft';
+  const previousStatus = todo.publish_status;
+  todo.publish_status = nextStatus;
+  renderManagerTodos();
+
+  try {
+    const res = await fetch(`/api/todos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ publish_status: nextStatus })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update visibility');
+    }
+    const updated = await res.json();
+    Object.assign(todo, updated);
+    renderManagerTodos();
+    showToast(nextStatus === 'published' ? 'Task published' : 'Task marked as draft', 'success');
+  } catch (err) {
+    todo.publish_status = previousStatus;
+    renderManagerTodos();
+    showToast(err.message, 'error');
+  }
 };
 
 async function addTodo() {
@@ -1621,13 +1668,13 @@ async function addTodo() {
       res = await fetch(`/api/todos/${editingTodoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, level })
+        body: JSON.stringify({ title, content, level, publish_status: todoFormPublishStatus })
       });
     } else {
       res = await fetch('/api/todos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ diamond, axis, level, title, content })
+        body: JSON.stringify({ diamond, axis, level, title, content, publish_status: todoFormPublishStatus })
       });
     }
 
@@ -1672,7 +1719,13 @@ function setupTodoManager() {
       todoFormModal.addEventListener('click', (e) => {
         if (e.target === todoFormModal) cancelTodoEdit();
       });
+
+      todoFormModal.querySelectorAll('.publish-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => setTodoFormPublishStatus(btn.dataset.status));
+      });
     }
+
+    setTodoFormPublishStatus('draft');
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && todoFormModal?.classList.contains('visible')) {

@@ -373,6 +373,69 @@ textarea {
   outline-offset: 2px;
 }
 
+.todo-item.todo-draft {
+  opacity: 0.85;
+}
+
+.todo-publish-btn.is-draft {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.todo-publish-btn.is-draft:hover {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.todo-publish-btn.is-published {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-green);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.todo-publish-btn.is-published:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.publish-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.publish-toggle-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.publish-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.publish-toggle-btn.active[data-status="draft"] {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.publish-toggle-btn.active[data-status="published"] {
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--accent-green);
+}
+
 .todo-add-form {
   margin-top: 24px;
   padding-top: 24px;

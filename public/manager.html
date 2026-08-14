@@ -371,6 +371,16 @@
           <label for="todo-new-content">Content (Markdown supported)</label>
           <textarea id="todo-new-content" rows="8" placeholder="Instructions, links, or details..."></textarea>
         </div>
+        <div class="form-group">
+          <label>Visibility</label>
+          <div class="publish-toggle" role="group" aria-label="Task visibility">
+            <button type="button" class="publish-toggle-btn" data-status="draft" id="todo-status-draft">Draft</button>
+            <button type="button" class="publish-toggle-btn" data-status="published" id="todo-status-published">Published</button>
+          </div>
+          <p style="margin: 6px 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            Draft tasks are hidden from the team until you publish them.
+          </p>
+        </div>
         <div class="btn-group">
           <button class="btn btn-secondary" id="btn-cancel-todo-edit">Cancel</button>
           <button class="btn btn-primary" id="btn-add-todo">Add Task</button>

@@ -17,6 +17,12 @@ function nextSortOrder(diamond, axis, level) {
   return (row?.max_order || 0) + 1;
 }
 
+function normalizePublishStatus(value, fallback = 'published') {
+  return value === 'draft' ? 'draft' : (value === 'published' ? 'published' : fallback);
+}
+
+const TODO_COLUMNS = 'id, diamond, axis, level, title, content, sort_order, publish_status, created_at';
+
 /**
  * Recalculates the user's skill diamond snapshot based on completed tasks.
  * The level for an axis is the highest level L where ALL tasks in levels 1 through L are complete.
@@ -24,7 +30,10 @@ function nextSortOrder(diamond, axis, level) {
 function syncUserDiamondSnapshot(userId, diamondId) {
   try {
     // 1. Get all todos for this diamond
-    const allTodos = db.prepare('SELECT id, axis, level FROM todos WHERE diamond = ?').all(diamondId);
+    const allTodos = db.prepare(`
+      SELECT id, axis, level FROM todos
+      WHERE diamond = ? AND publish_status = 'published'
+    `).all(diamondId);
     
     // 2. Get all completed todos for this user
     const completedRows = db.prepare(`
@@ -79,11 +88,17 @@ router.get('/', (req, res) => {
   const { userId } = req.query;
 
   try {
-    const todos = db.prepare(`
-      SELECT id, diamond, axis, level, title, content, sort_order, created_at
+    let todos = db.prepare(`
+      SELECT ${TODO_COLUMNS}
       FROM todos
       ORDER BY diamond ASC, axis ASC, level ASC, sort_order ASC, id ASC
     `).all();
+
+    // Drafts are manager-only and never appear on a user's checklist
+    const includeDrafts = req.session?.role === 'manager' && !userId;
+    if (!includeDrafts) {
+      todos = todos.filter(t => t.publish_status !== 'draft');
+    }
 
     if (userId) {
       const completions = db.prepare(`
@@ -122,8 +137,9 @@ router.get('/', (req, res) => {
 
 // POST /api/todos - Manager only
 router.post('/', requireManager, (req, res) => {
-  const { diamond, axis, level, title, content } = req.body;
+  const { diamond, axis, level, title, content, publish_status } = req.body;
   const bareTitle = stripStepPrefix(title);
+  const publishStatus = normalizePublishStatus(publish_status, 'draft');
 
   if (!diamond || !axis || !level || !bareTitle) {
     return res.status(400).json({ error: 'diamond, axis, level, and title are required' });
@@ -132,9 +148,9 @@ router.post('/', requireManager, (req, res) => {
   try {
     const sortOrder = nextSortOrder(diamond, axis, level);
     const result = db.prepare(`
-      INSERT INTO todos (diamond, axis, level, title, content, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(diamond, axis, level, bareTitle, content || '', sortOrder);
+      INSERT INTO todos (diamond, axis, level, title, content, sort_order, publish_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(diamond, axis, level, bareTitle, content || '', sortOrder, publishStatus);
 
     const newTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(newTodo);
@@ -174,7 +190,7 @@ router.put('/reorder', requireManager, (req, res) => {
     reorder(orderedIds.map(Number));
 
     const updated = db.prepare(`
-      SELECT id, diamond, axis, level, title, content, sort_order, created_at
+      SELECT ${TODO_COLUMNS}
       FROM todos
       WHERE diamond = ? AND axis = ? AND level = ?
       ORDER BY sort_order ASC, id ASC
@@ -189,7 +205,7 @@ router.put('/reorder', requireManager, (req, res) => {
 // PUT /api/todos/:id - Manager only
 router.put('/:id', requireManager, (req, res) => {
   const { id } = req.params;
-  const { title, content } = req.body;
+  const { title, content, publish_status } = req.body;
 
   try {
     const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
@@ -198,12 +214,13 @@ router.put('/:id', requireManager, (req, res) => {
     }
 
     const nextTitle = title !== undefined ? (stripStepPrefix(title) || todo.title) : todo.title;
+    const nextStatus = normalizePublishStatus(publish_status, todo.publish_status || 'published');
 
     db.prepare(`
       UPDATE todos
-      SET title = ?, content = ?, level = ?
+      SET title = ?, content = ?, level = ?, publish_status = ?
       WHERE id = ?
-    `).run(nextTitle, content !== undefined ? content : todo.content, req.body.level || todo.level, id);
+    `).run(nextTitle, content !== undefined ? content : todo.content, req.body.level || todo.level, nextStatus, id);
 
     const updatedTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
     res.json(updatedTodo);
@@ -250,9 +267,12 @@ router.post('/:id/complete', (req, res) => {
   }
 
   try {
-    const todo = db.prepare('SELECT id, diamond FROM todos WHERE id = ?').get(id);
+    const todo = db.prepare('SELECT id, diamond, publish_status FROM todos WHERE id = ?').get(id);
     if (!todo) {
       return res.status(404).json({ error: 'Todo not found' });
+    }
+    if (todo.publish_status === 'draft') {
+      return res.status(400).json({ error: 'Draft tasks cannot be completed' });
     }
 
     const newStatus = completed ? 'awaiting_approval' : 'incomplete';
@@ -314,6 +334,7 @@ router.get('/pending-approvals', requireManager, (req, res) => {
       JOIN users u ON ut.user_id = u.id
       JOIN todos t ON ut.todo_id = t.id
       WHERE ut.status = 'awaiting_approval'
+        AND t.publish_status = 'published'
       ORDER BY ut.submitted_at ASC
     `).all();
     res.json(pending);

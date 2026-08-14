@@ -54,6 +54,7 @@ db.exec(`
     title TEXT NOT NULL,
     content TEXT,
     sort_order INTEGER NOT NULL DEFAULT 0,
+    publish_status TEXT NOT NULL DEFAULT 'published' CHECK(publish_status IN ('draft', 'published')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -125,6 +126,13 @@ try {
 // Add sort_order for checklist task ordering within a diamond/axis/level group
 try {
   db.exec('ALTER TABLE todos ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
+} catch (e) {
+  // Column already exists
+}
+
+// Draft vs published visibility for checklist tasks
+try {
+  db.exec("ALTER TABLE todos ADD COLUMN publish_status TEXT NOT NULL DEFAULT 'published' CHECK(publish_status IN ('draft', 'published'))");
 } catch (e) {
   // Column already exists
 }
